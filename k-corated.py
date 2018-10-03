@@ -30,6 +30,7 @@ def mycmp(user1, user2):
 
 
 def sort(ratings):
+    logging.info('sorting the ratings')
     ratings = np.insert(ratings, len(items), [i + 1 for i in range(len(users))], 1)
     temp = [ratings[i, :] for i in range(len(users))]
     temp.sort(key=cmp_to_key(mycmp))
@@ -40,6 +41,7 @@ def sort(ratings):
 
 
 def part_k_corated(ratings, k):
+    logging.info('dividing the ratings into two')
     candi = []
     temp = {}
     for i in range(len(users)):
@@ -86,6 +88,8 @@ def are_corated(ratings, start, end):
 
 def k_corating(k, non_k_matrix, trust_web):
     remain = non_k_matrix.shape[0]
+    logging.info('filling the non_k_corated matrix which is shape(%s,%s), %s lines remained', non_k_matrix.shape[0],non_k_matrix.shape[1],remain)
+    remain_hundred = remain//100-1
     start = 0
     while remain > 0:
         if remain >= k:
@@ -110,6 +114,8 @@ def k_corating(k, non_k_matrix, trust_web):
                                                          [i for i in range(len(users))], 'trust', trust_web)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
+        if remain//100==remain_hundred:
+            logging.info('%s00 lines remained',remain_hundred)
 
 
 def test():
@@ -125,12 +131,8 @@ def test():
 
 
 def k_corate(k, ratings, trust_web):
-    logging.info('sorting the ratings')
     sorted_ratings = sort(ratings)
-    logging.info('dividing the ratings into two')
     k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
-    logging.info('filling the non_k_corated matrix which is shape(%s,%s)', non_k_corated_part.shape[0],
-                 non_k_corated_part.shape[1])
     k_corating(k, non_k_corated_part, trust_web)
     logging.info('combining the two part')
     if k_coreted_part is not None:
