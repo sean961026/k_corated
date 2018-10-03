@@ -2,7 +2,7 @@ from rs import supp_user, users, items, original_ratings, pd_rating
 from functools import cmp_to_key
 import numpy as np
 import logging
-
+import pandas as pd
 def set_cmp(user1, user2):
     items_1 = supp_user(user1)
     items_2 = supp_user(user2)
@@ -131,4 +131,7 @@ def k_corate(k,ratings,trust_web):
 
 
 if __name__ == '__main__':
-    test()
+    k=10
+    trust_web=np.loadtxt('trust_web.csv',delimiter=',')
+    k_corated_ratings=k_corate(k,original_ratings,trust_web)[0]
+    pd.DataFrame(k_corated_ratings).to_csv(str(k)+'_corated_ratings.csv', index=False, header=False)
