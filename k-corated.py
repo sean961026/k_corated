@@ -90,7 +90,6 @@ def k_corating(k, non_k_matrix, trust_web):
     remain = non_k_matrix.shape[0]
     logging.info('filling the non_k_corated matrix which is shape(%s,%s), %s lines remained, k is ',
                  non_k_matrix.shape[0], non_k_matrix.shape[1], remain, k)
-    remain_hundred = remain // 100 - 1
     start = 0
     while remain > 0:
         if remain >= k:
@@ -115,9 +114,7 @@ def k_corating(k, non_k_matrix, trust_web):
                                                          [i for i in range(len(users))], 'trust', trust_web)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
-        if remain // 100 == remain_hundred:
-            logging.info('about %s00 lines remained', remain_hundred)
-            remain_hundred -= 1
+        logging.info('%s lines remained',remain)
 
 
 def test():
