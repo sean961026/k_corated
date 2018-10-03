@@ -106,7 +106,7 @@ def k_corating(k, non_k_matrix, trust_web):
         for item_id in items_need_to_rate:
             for i in range(temp_range[0], temp_range[1]):
                 if non_k_matrix[i][item_id] == 0:
-                    non_k_matrix[i][item_id] = pd_rating(original_ratings, int(non_k_matrix[i][-1]), item_id,
+                    non_k_matrix[i][item_id] = pd_rating(original_ratings, int(non_k_matrix[i][-1]-1), item_id,
                                                          [i for i in range(len(users))], 'trust', trust_web)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
