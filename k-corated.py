@@ -126,7 +126,7 @@ def k_corate(k,ratings,trust_web):
     k_coreted,non_k_corated=part_k_corated(sorted_ratings,k)
     k_corating(k,non_k_corated,trust_web)
     ret=np.insert(k_coreted,k_coreted.shape[0],non_k_corated,0)
-    ret_no_index=np.delete(ret,ret.shape[1],1)
+    ret_no_index=np.delete(ret,ret.shape[1]-1,1)
     return ret_no_index,ret
 
 
