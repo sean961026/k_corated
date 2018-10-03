@@ -122,9 +122,13 @@ def test():
     logging.info(ans[1])
 
 def k_corate(k,ratings,trust_web):
+    logging.info('sorting the ratings')
     sorted_ratings=sort(ratings)
+    logging.info('part the ratings into two')
     k_coreted,non_k_corated=part_k_corated(sorted_ratings,k)
+    logging.info('filling the non_k_corated matrix which is shape(%s,%s)',non_k_corated.shape[0],non_k_corated.shape[1])
     k_corating(k,non_k_corated,trust_web)
+    logging.info('combining the two part')
     ret=np.insert(k_coreted,k_coreted.shape[0],non_k_corated,0)
     ret_no_index=np.delete(ret,ret.shape[1]-1,1)
     return ret_no_index,ret
