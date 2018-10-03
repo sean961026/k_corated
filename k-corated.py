@@ -129,9 +129,9 @@ def k_corate(k, ratings, trust_web):
     ret_no_index = np.delete(ret, ret.shape[1] - 1, 1)
     return ret_no_index, ret
 
-original_ratings=np.loadtxt(sys.argv[2]+'_ratings.csv',delimiter=',')
-trust_web = np.loadtxt(sys.argv[2]+'_trust_web.csv', delimiter=',')
+original_ratings=np.loadtxt(sys.argv[-1]+'_ratings.csv',delimiter=',')
+trust_web = np.loadtxt(sys.argv[-1]+'_trust_web.csv', delimiter=',')
 if __name__ == '__main__':
     k = 10
     k_corated_ratings = k_corate(k, original_ratings, trust_web)[0]
-    pd.DataFrame(k_corated_ratings).to_csv(sys.argv[2]+'_'+str(k) + '_corated_ratings.csv', index=False, header=False)
+    pd.DataFrame(k_corated_ratings).to_csv(sys.argv[-1]+'_'+str(k) + '_corated_ratings.csv', index=False, header=False)
