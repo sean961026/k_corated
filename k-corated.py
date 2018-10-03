@@ -116,6 +116,7 @@ def k_corating(k, non_k_matrix, trust_web):
         remain -= temp_range[1] - temp_range[0]
         if remain//100==remain_hundred:
             logging.info('%s00 lines remained',remain_hundred)
+            remain_hundred-=1
 
 
 def test():
