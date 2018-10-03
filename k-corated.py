@@ -1,9 +1,9 @@
-from rs import supp_user, users, items, original_ratings, pd_rating
+from rs import supp_user, users, items, pd_rating
 from functools import cmp_to_key
 import numpy as np
 import logging
 import pandas as pd
-
+import sys
 
 def set_cmp(user1, user2):
     items_1 = supp_user(user1)
@@ -86,10 +86,10 @@ def are_corated(ratings, start, end):
     return True, end + 1
 
 
-def k_corating(k, non_k_matrix, trust_web):
+def k_corating(k, non_k_matrix, trust_web,ratings):
+    logging.info('filling the non_k_corated matrix which is shape(%s,%s), k is %s',
+                 non_k_matrix.shape[0], non_k_matrix.shape[1], k)
     remain = non_k_matrix.shape[0]
-    logging.info('filling the non_k_corated matrix which is shape(%s,%s), %s lines remained, k is %s',
-                 non_k_matrix.shape[0], non_k_matrix.shape[1], remain, k)
     start = 0
     while remain > 0:
         if remain >= k:
@@ -103,7 +103,7 @@ def k_corating(k, non_k_matrix, trust_web):
                 temp_range[1] = non_k_matrix.shape[0]
         else:
             temp_range = [start, non_k_matrix.shape[0]]
-        logging.info('trying to fill lines in [%s,%s]',temp_range[0],temp_range[1]-1)
+        logging.info('trying to fill lines in [%s,%s]', temp_range[0], temp_range[1] - 1)
         items_need_to_rate = set()
         for i in range(temp_range[0], temp_range[1]):
             items_need_to_rate = items_need_to_rate.union(supp_user(non_k_matrix[i, :]))
@@ -111,28 +111,16 @@ def k_corating(k, non_k_matrix, trust_web):
         for item_id in items_need_to_rate:
             for i in range(temp_range[0], temp_range[1]):
                 if non_k_matrix[i][item_id] == 0:
-                    non_k_matrix[i][item_id] = pd_rating(original_ratings, int(non_k_matrix[i][-1] - 1), item_id,
+                    non_k_matrix[i][item_id] = pd_rating(ratings, int(non_k_matrix[i][-1] - 1), item_id,
                                                          [i for i in range(len(users))], 'trust', trust_web)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
 
 
-def test():
-    global users, items, original_ratings
-    items = [0, 1, 2, 3]
-    users = [i for i in range(12)]
-    original_ratings = np.array(
-        [[0, 1, 4, 0], [0, 4, 1, 0], [4, 0, 0, 5], [4, 0, 3, 0], [4, 4, 0, 0], [4, 5, 0, 0], [0, 0, 4, 0], [0, 0, 5, 0],
-         [0, 0, 3, 0], [0, 5, 0, 0], [4, 0, 0, 0], [4, 0, 0, 0]])
-    ans = k_corate(2, original_ratings, np.ones(shape=(12, 12)))
-    logging.info(ans[0])
-    logging.info(ans[1])
-
-
 def k_corate(k, ratings, trust_web):
     sorted_ratings = sort(ratings)
     k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
-    k_corating(k, non_k_corated_part, trust_web)
+    k_corating(k, non_k_corated_part, trust_web,ratings)
     logging.info('combining the two part')
     if k_coreted_part is not None:
         ret = np.insert(k_coreted_part, k_coreted_part.shape[0], non_k_corated_part, 0)
@@ -141,9 +129,9 @@ def k_corate(k, ratings, trust_web):
     ret_no_index = np.delete(ret, ret.shape[1] - 1, 1)
     return ret_no_index, ret
 
-
+original_ratings=np.loadtxt(sys.argv[2]+'_ratings.csv',delimiter=',')
+trust_web = np.loadtxt(sys.argv[2]+'_trust_web.csv', delimiter=',')
 if __name__ == '__main__':
     k = 10
-    trust_web = np.loadtxt('trust_web.csv', delimiter=',')
     k_corated_ratings = k_corate(k, original_ratings, trust_web)[0]
-    pd.DataFrame(k_corated_ratings).to_csv(str(k) + '_corated_ratings.csv', index=False, header=False)
+    pd.DataFrame(k_corated_ratings).to_csv(sys.argv[2]+'_'+str(k) + '_corated_ratings.csv', index=False, header=False)

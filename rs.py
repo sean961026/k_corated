@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 import pandas as pd
+import sys
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -32,7 +33,7 @@ with open(item_file, 'r', encoding='ISO-8859-1') as file:
         items.append({'id': int(movie_id), 'title': movie_title, 'release_date': release_date,
                       'video_release_date': video_release_date, 'IMDb_URL': IMDb_URL, 'genres': genres})
 
-rating_file = directory + 'u.data'
+rating_file = directory + sys.argv[2]
 original_ratings = np.zeros(shape=(len(users), len(items)))
 logging.info('reading ratings from %s', rating_file)
 with open(rating_file, 'r') as file:
@@ -162,5 +163,5 @@ if __name__ == '__main__':
         for j in range(len(users)):
             if trust_web[i][j] == 0:
                 trust_web[i][j] = trust_propagation(original_ratings, i, j)
-    pd.DataFrame(original_ratings).to_csv('ratings.csv', index=False, header=False)
-    pd.DataFrame(trust_web).to_csv('trust_web.csv', index=False, header=False)
+    pd.DataFrame(original_ratings).to_csv(sys.argv[2]+'_ratings.csv', index=False, header=False)
+    pd.DataFrame(trust_web).to_csv(sys.argv[2]+'_trust_web.csv', index=False, header=False)
