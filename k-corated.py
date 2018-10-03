@@ -103,6 +103,7 @@ def k_corating(k, non_k_matrix, trust_web):
                 temp_range[1] = non_k_matrix.shape[0]
         else:
             temp_range = [start, non_k_matrix.shape[0]]
+        logging.info('trying to fill lines in [%s,%s]',temp_range[0],temp_range[1]-1)
         items_need_to_rate = set()
         for i in range(temp_range[0], temp_range[1]):
             items_need_to_rate = items_need_to_rate.union(supp_user(non_k_matrix[i, :]))
@@ -114,7 +115,6 @@ def k_corating(k, non_k_matrix, trust_web):
                                                          [i for i in range(len(users))], 'trust', trust_web)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
-        logging.info('%s lines remained', remain)
 
 
 def test():
