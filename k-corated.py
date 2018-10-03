@@ -117,12 +117,18 @@ def test():
     original_ratings = np.array(
         [[0, 1, 4, 0], [0, 4, 1, 0], [4, 0, 0, 5], [4, 0, 3, 0], [4, 4, 0, 0], [4, 5, 0, 0], [0, 0, 4, 0], [0, 0, 5, 0],
          [0, 0, 3, 0], [0, 5, 0, 0], [4, 0, 0, 0], [4, 0, 0, 0]])
-    sorted_ratings=sort(original_ratings)
-    k_corated,non_k_corated=part_k_corated(sorted_ratings,2)
-    logging.info(k_corated)
-    logging.info(non_k_corated)
-    k_corating(2,non_k_corated,np.ones(shape=(12,12)))
-    logging.info(non_k_corated)
+    ans=k_corate(2,original_ratings,np.ones(shape=(12,12)))
+    logging.info(ans[0])
+    logging.info(ans[1])
+
+def k_corate(k,ratings,trust_web):
+    sorted_ratings=sort(ratings)
+    k_coreted,non_k_corated=part_k_corated(sorted_ratings)
+    k_corating(k,non_k_corated,trust_web)
+    ret=np.insert(k_coreted,k_coreted.shape[0],non_k_corated,0)
+    ret_no_index=np.delete(ret,ret.shape[1],1)
+    return ret_no_index,ret
+
 
 if __name__ == '__main__':
     test()
