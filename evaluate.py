@@ -16,8 +16,8 @@ def RMSE(test_set_file,predict_fun,**kwargs):
     total=0
     for i in range(size):
         record=test_set[i,:]
-        test_user=record[0]
-        test_item=record[1]
+        test_user=record[0]-1
+        test_item=record[1]-1
         kwargs.update({'user_id':test_user,'item_id':test_item})
         if 'neighbor_ids' not in kwargs:
             kwargs.update({'neighbor_ids': default_neighbors})
