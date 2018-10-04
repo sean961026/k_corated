@@ -28,6 +28,13 @@ def RMSE(test_set_file,predict_fun,**kwargs):
 
 def main():
     original_ratings=np.loadtxt(input_orginal_ratings_file+'_ratings.csv',delimiter=',')
+    trust_web=np.loadtxt(input_orginal_ratings_file+'_trust_web.csv',delimiter=',')
+    test_set_file=input_orginal_ratings_file[0:3]+'test'
+    #ratings, user_id, item_id, neighbor_ids, mode='default', trust_web=None
+    kwarg={'ratings':original_ratings,'neighbor_ids':default_neighbors,'mode':input_mode,'trust_web':trust_web}
+    ans=RMSE(test_set_file,default_predict_fun,**kwarg)
+    logging.info('the RMSE result of %s is %s',input_orginal_ratings_file,ans)
+
 
 if __name__ == '__main__':
     main()
