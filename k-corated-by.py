@@ -5,9 +5,9 @@ import logging
 import pandas as pd
 import sys
 
-input_rating_file = sys.argv[1]
-input_k = int(sys.argv[2])
-input_mode = int(sys.argv[3])
+input_k = int(sys.argv[1])
+input_rating_file = sys.argv[2]
+input_mode = sys.argv[3]
 default_predict_fun=pd_rating
 default_neighbors=[i for i in range(len(users))]
 
@@ -123,7 +123,7 @@ def k_corating(k, non_k_matrix, predict_fun, **kwargs):
                         kwargs.update({'neighbor_ids':default_neighbors})
                     non_k_matrix[i][item_id] = predict_fun(**kwargs)
         start = temp_range[1]
-        remain -= temp_range[1] - temp_range[0]
+        remain -= temp_ra1nge[1] - temp_range[0]
 
 
 def k_corate(k, ratings, predict_fun, **kwargs):
