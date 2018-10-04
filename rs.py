@@ -13,6 +13,7 @@ user_size = 943
 item_size = 1682
 trust_choices = ['default', 'adjust']
 sim_choices = ['default', 'adjust']
+default_neighbors=[i for i in range(user_size)]
 
 
 def get_users(user_file):
@@ -224,7 +225,7 @@ def main():
         dump(input_rating_file + '_' + trust_mode + '_' + 'trust_web', trust_web)
     if sim_mode:
         sim_web = create_sim_web(original_ratings, sim_mode)
-        dump(input_rating_file + '_' + sim_mode + '_' + 'trust_web', sim_web)
+        dump(input_rating_file + '_' + sim_mode + '_' + 'sim_web', sim_web)
 
 
 if __name__ == '__main__':
