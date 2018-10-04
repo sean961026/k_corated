@@ -123,10 +123,11 @@ def k_corating(k, non_k_matrix, predict_fun, **kwargs):
                         kwargs.update({'neighbor_ids':default_neighbors})
                     non_k_matrix[i][item_id] = predict_fun(**kwargs)
         start = temp_range[1]
-        remain -= temp_ra1nge[1] - temp_range[0]
+        remain -= temp_range[1] - temp_range[0]
 
 
 def k_corate(k, ratings, predict_fun, **kwargs):
+    kwargs.update({'ratings':ratings})
     sorted_ratings = sort(ratings)
     k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
     k_corating(k, non_k_corated_part, predict_fun, **kwargs)
