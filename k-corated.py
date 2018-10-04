@@ -5,6 +5,12 @@ import logging
 import pandas as pd
 import sys
 
+input_rating_file = sys.argv[1]
+input_k = int(sys.argv[2])
+input_mode = int(sys.argv[3])
+default_predict_fun=pd_rating
+default_neighbors=[i for i in range(len(users))]
+
 def set_cmp(user1, user2):
     items_1 = supp_user(user1)
     items_2 = supp_user(user2)
@@ -86,7 +92,7 @@ def are_corated(ratings, start, end):
     return True, end + 1
 
 
-def k_corating(k, non_k_matrix, trust_web,ratings):
+def k_corating(k, non_k_matrix, predict_fun, **kwargs):
     logging.info('filling the non_k_corated matrix which is shape(%s,%s), k is %s',
                  non_k_matrix.shape[0], non_k_matrix.shape[1], k)
     remain = non_k_matrix.shape[0]
@@ -111,16 +117,19 @@ def k_corating(k, non_k_matrix, trust_web,ratings):
         for item_id in items_need_to_rate:
             for i in range(temp_range[0], temp_range[1]):
                 if non_k_matrix[i][item_id] == 0:
-                    non_k_matrix[i][item_id] = pd_rating(ratings, int(non_k_matrix[i][-1] - 1), item_id,
-                                                         [i for i in range(len(users))], 'trust', trust_web)
+                    # ratings, mode = 'default', trust_web = None
+                    kwargs.update({'user_id': int(non_k_matrix[i][-1] - 1), 'item_id': item_id})
+                    if 'neighbor_ids' not in kwargs:
+                        kwargs.update({'neighbor_ids':default_neighbors})
+                    non_k_matrix[i][item_id] = predict_fun(**kwargs)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
 
 
-def k_corate(k, ratings, trust_web):
+def k_corate(k, ratings, predict_fun, **kwargs):
     sorted_ratings = sort(ratings)
     k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
-    k_corating(k, non_k_corated_part, trust_web,ratings)
+    k_corating(k, non_k_corated_part, predict_fun, **kwargs)
     logging.info('combining the two part')
     if k_coreted_part is not None:
         ret = np.insert(k_coreted_part, k_coreted_part.shape[0], non_k_corated_part, 0)
@@ -129,9 +138,19 @@ def k_corate(k, ratings, trust_web):
     ret_no_index = np.delete(ret, ret.shape[1] - 1, 1)
     return ret_no_index, ret
 
-original_ratings=np.loadtxt(sys.argv[-1]+'_ratings.csv',delimiter=',')
-trust_web = np.loadtxt(sys.argv[-1]+'_trust_web.csv', delimiter=',')
+
+def main(k, rating_file, mode):
+    original_ratings = np.loadtxt(rating_file + '_ratings.csv', delimiter=',')
+    trust_web = np.loadtxt(rating_file + '_trust_web.csv', delimiter=',')
+    k_corated_ratings, k_corated_ratings_with_reference = k_corate(k, original_ratings, default_predict_fun,
+                                                                   **{'mode': mode, 'trust_web': trust_web})
+    pd.DataFrame(k_corated_ratings).to_csv(rating_file + '_' + str(k) + '_corated_ratings_by_' + mode + '.csv',
+                                           index=False,header=False)
+    logging.info('dump %s to csv', rating_file + '_' + str(k) + '_corated_ratings_by_'+mode)
+    pd.DataFrame(k_corated_ratings_with_reference).to_csv(
+        rating_file + '_' + str(k) + '_corated_ratings_with_index_by_'+mode+'.csv', index=False, header=False)
+    logging.info('dump %s to csv', rating_file + '_' + str(k) + '_corated_ratings_with_index_by_' + mode)
+
+
 if __name__ == '__main__':
-    k = 10
-    k_corated_ratings = k_corate(k, original_ratings, trust_web)[0]
-    pd.DataFrame(k_corated_ratings).to_csv(sys.argv[-1]+'_'+str(k) + '_corated_ratings.csv', index=False, header=False)
+    main(input_k, input_rating_file, input_mode)

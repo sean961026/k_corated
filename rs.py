@@ -33,14 +33,17 @@ with open(item_file, 'r', encoding='ISO-8859-1') as file:
         items.append({'id': int(movie_id), 'title': movie_title, 'release_date': release_date,
                       'video_release_date': video_release_date, 'IMDb_URL': IMDb_URL, 'genres': genres})
 
-rating_file = directory + sys.argv[-1]
-original_ratings = np.zeros(shape=(len(users), len(items)))
-logging.info('reading ratings from %s', rating_file)
-with open(rating_file, 'r') as file:
-    lines = file.readlines()
-    for line in lines:
-        user_id, item_id, rating, time_stamp = line.split('\t')
-        original_ratings[int(user_id) - 1][int(item_id) - 1] = rating
+input_rating_file=sys.argv[1]
+
+def read_ratings(rating_file):
+    original_ratings = np.zeros(shape=(len(users), len(items)))
+    logging.info('reading ratings from %s', rating_file)
+    with open(rating_file, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            user_id, item_id, rating, time_stamp = line.split('\t')
+            original_ratings[int(user_id) - 1][int(item_id) - 1] = rating
+    return original_ratings
 
 
 def supp_user(user):
@@ -75,7 +78,7 @@ def user_sim(user1, user2, mode='default'):
         raise ValueError
 
 
-def pd_rating(ratings, user_id, item_id, neighbor_ids, mode='default',trust_web=None):
+def pd_rating(ratings, user_id, item_id, neighbor_ids, mode='default', trust_web=None):
     user = ratings[user_id, :]
     if len(neighbor_ids) == 1:
         neighbor = ratings[neighbor_ids[0], :]
@@ -83,9 +86,9 @@ def pd_rating(ratings, user_id, item_id, neighbor_ids, mode='default',trust_web=
     weight_sum = 0
     weight_dif_sum = 0
     for neighbor_id in neighbor_ids:
-        neighbor = ratings[neighbor_id,:]
+        neighbor = ratings[neighbor_id, :]
         if mode == 'default':
-            weight_temp = user_sim(user,neighbor)
+            weight_temp = user_sim(user, neighbor)
         elif mode == 'trust':
             weight_temp = trust_web[user_id][neighbor_id]
         else:
@@ -118,7 +121,7 @@ def user_trust(ratings, id_user1, id_user2, mode='default'):
         raise ValueError
 
 
-def trust_propagation(ratings, id_user1, id_user2):
+def trust_propagation(ratings, id_user1, id_user2, trust_web):
     temp_mid = set()
     items_bought_by_user1 = supp_user(ratings[id_user1, :])
     for item_id in items_bought_by_user1:
@@ -141,7 +144,7 @@ def trust_propagation(ratings, id_user1, id_user2):
     return up / down
 
 
-if __name__ == '__main__':
+def create_trust_web(original_ratings):
     trust_web = np.zeros(shape=(len(users), len(users)))
     hundred = 1
     logging.info('start to fill trust web')
@@ -162,6 +165,19 @@ if __name__ == '__main__':
             hundred += 1
         for j in range(len(users)):
             if trust_web[i][j] == 0:
-                trust_web[i][j] = trust_propagation(original_ratings, i, j)
-    pd.DataFrame(original_ratings).to_csv(sys.argv[-1]+'_ratings.csv', index=False, header=False)
-    pd.DataFrame(trust_web).to_csv(sys.argv[-1]+'_trust_web.csv', index=False, header=False)
+                trust_web[i][j] = trust_propagation(original_ratings, i, j, trust_web)
+    return trust_web
+
+
+def main():
+    rating_file = directory + input_rating_file
+    original_ratings = read_ratings(rating_file)
+    pd.DataFrame(original_ratings).to_csv(input_rating_file + '_ratings.csv', index=False, header=False)
+    logging.info('dump %s to csv', input_rating_file + '_ratings')
+    trust_web = create_trust_web(original_ratings)
+    pd.DataFrame(trust_web).to_csv(input_rating_file + '_trust_web.csv', index=False, header=False)
+    logging.info('dump %s to csv', input_rating_file + '_trust_web')
+
+
+if __name__ == '__main__':
+    main()
