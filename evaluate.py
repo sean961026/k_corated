@@ -17,6 +17,7 @@ def RMSE(test_set_file,predict_fun,**kwargs):
     for i in range(size):
         record=test_set[i,:]
         test_user=record[0]-1
+        logging.info(test_user)
         test_item=record[1]-1
         kwargs.update({'user_id':test_user,'item_id':test_item})
         if 'neighbor_ids' not in kwargs:
