@@ -220,11 +220,11 @@ def main():
     sim_mode = args.sim
     need_propogate=args.prop
     rating_file = directory + input_rating_file
-    if not os.path.exists(rating_file):
+    if not os.path.exists(input_rating_file + '_ratings.csv'):
         original_ratings = get_ratings(rating_file)
         dump(input_rating_file + '_ratings', original_ratings)
     else:
-        original_ratings=np.loadtxt(rating_file,delimiter=',')
+        original_ratings=np.loadtxt(input_rating_file + '_ratings.csv',delimiter=',')
     if not os.path.exists(input_rating_file + '_corated_web.csv'):
         corated_web = create_corated_web(original_ratings)
         dump(input_rating_file + '_corated_web', corated_web)
