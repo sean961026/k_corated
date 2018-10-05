@@ -130,8 +130,9 @@ def k_corate(k, ratings_name, web_name, neighbor_ids=default_neighbors):
         ret = np.insert(k_coreted_part, k_coreted_part.shape[0], non_k_corated_part, 0)
     else:
         ret = non_k_corated_part
-    ret_no_index = np.delete(ret, ret.shape[1] - 1, 1)
-    return ret_no_index, ret
+    index_trans=ret[:,-1]
+    ret = np.delete(ret, ret.shape[1] - 1, 1)
+    return ret, index_trans
 
 
 def main():
@@ -143,11 +144,11 @@ def main():
     k=args.k
     web_name=args.web
     ratings_name=args.ratings
-    with_index,without_index=k_corate(k,ratings_name,web_name)
-    filename='%s_corated_ratings_from_%s_by_%s_with_index' % (k,ratings_name[:-4],web_name[:-4])
+    with_index,index_trans=k_corate(k,ratings_name,web_name)
+    filename='%s_corated_ratings_from_%s_by_%s' % (k,ratings_name[:-4],web_name[:-4])
     dump(filename,with_index)
-    filename = '%s_corated_ratings_from_%s_by_%s_without_index' % (k, ratings_name[:-4], web_name[:-4])
-    dump(filename,without_index)
+    filename = '%s_corated_ratings_from_%s_by_%s_index' % (k, ratings_name[:-4], web_name[:-4])
+    dump(filename,index_trans)
 
 
 if __name__ == '__main__':
