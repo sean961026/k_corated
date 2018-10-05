@@ -68,6 +68,21 @@ def co_rated_items(user1, user2):
 def co_bought_users(item1, item2):
     return list(supp_item(item1).intersection(supp_item(item2)))
 
+def co_rated_mean(user1,user2):
+    co_items=co_rated_items(user1,user2)
+    sum1=0
+    sum2=0
+    for item in co_items:
+        sum1+=user1[item]
+        sum2+=user2[item]
+    return sum1/len(co_items),sum2/len(co_items)
+
+def single_mean(user):
+    items=supp_user(user)
+    sum_u=0
+    for item in items:
+        sum_u+=user[item]
+    return sum_u/len(items)
 
 def user_sim(user1, user2, mode):
     if mode == 'default':
@@ -94,7 +109,8 @@ def user_trust(ratings, id_user1, id_user2, mode):
             return 0
         temp_sum = 0
         for item_id in share_items:
-            temp_sum += 1 - abs(user1.mean() + user2[item_id] - user2.mean() - user1[item_id]) / rate_scale
+            user1_mean,user2_mean=co_rated_mean(user1,user2)
+            temp_sum += 1 - abs(user1_mean + user2[item_id] - user2_mean - user1[item_id]) / rate_scale
         return temp_sum / len(share_items)
     elif mode == 'adjust':
         pass
@@ -185,22 +201,22 @@ def create_corated_web(original_ratings):
 
 def pd_rating(ratings, user_id, item_id, neighbor_ids, web):
     user = ratings[user_id, :]
-    if len(neighbor_ids) == 1:
-        neighbor = ratings[neighbor_ids[0], :]
-        return user.mean() + neighbor[item_id] - neighbor.mean()
     weight_sum = 0
     weight_dif_sum = 0
+    single_user_mean=single_mean(user)
     for neighbor_id in neighbor_ids:
         neighbor = ratings[neighbor_id, :]
-        weight_temp = web[user_id][neighbor_id]
-        weight_sum += weight_temp
-        weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor.mean())
+        if item_id in supp_user(neighbor):
+            neighbor_mean=co_rated_mean(user,neighbor)[1]
+            weight_temp = web[user_id][neighbor_id]
+            weight_sum += weight_temp
+            weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
     try:
         assert weight_sum != 0
         return user.mean() + weight_dif_sum / weight_sum
     except:
         logging.warning('unexpected weight_sum==0')
-        return user.mean()
+        return single_user_mean
 
 
 def dump(filename, matrix):
