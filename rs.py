@@ -216,7 +216,7 @@ def pd_rating(ratings, user_id, item_id, neighbor_ids, web):
             weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
     try:
         assert weight_sum != 0
-        return user.mean() + weight_dif_sum / weight_sum
+        return single_user_mean + weight_dif_sum / weight_sum
     except:
         logging.warning('unexpected weight_sum==0')
         return single_user_mean
