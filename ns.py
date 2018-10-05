@@ -129,6 +129,10 @@ def main():
     correct = args.total
     best_guess = args.method == 'best'
     param = args.param
+    if best_guess:
+        param=int(param)
+    else:
+        param=float(param)
     ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param)
 
 
