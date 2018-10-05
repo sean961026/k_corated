@@ -192,7 +192,7 @@ def pd_rating(ratings, user_id, item_id, neighbor_ids, web):
     weight_dif_sum = 0
     for neighbor_id in neighbor_ids:
         neighbor = ratings[neighbor_id, :]
-        weight_temp = web[user_id][item_id]
+        weight_temp = web[user_id][neighbor_id]
         weight_sum += weight_temp
         weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor.mean())
     try:
