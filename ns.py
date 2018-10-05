@@ -16,7 +16,7 @@ def score(aux, record, ratings):
     item_ids = list(np.nonzero(aux)[0])
     sum = 0
     for item_id in item_ids:
-        weight = 1 / supp_item(ratings[:, item_id])
+        weight = 1 / len(supp_item(ratings[:, item_id]))
         sum += weight * sim_rate(aux[item_id], record[item_id])
     return sum
 
