@@ -8,9 +8,10 @@ dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
 default_neighbors = [i for i in range(user_size)]
 
 
-def RMSE(test_set_file, base_ratings, neighbor_ids, web):
-    original_ratings = np.loadtxt(base_ratings, delimiter=',')
-    test_set = np.loadtxt(directory + test_set_file, delimiter='\t')
+def RMSE(test_set_file_name, base_ratings_file_name, neighbor_ids, web_name):
+    original_ratings = np.loadtxt(base_ratings_file_name, delimiter=',')
+    test_set = np.loadtxt(test_set_file_name, delimiter='\t')
+    web=np.loadtxt(web_name,delimiter=',')
     size = test_set.shape[0]
     total = 0
     for i in range(size):
@@ -30,10 +31,8 @@ def main():
     args = parser.parse_args()
     data_set = args.dataset
     web_name = args.web
-    original_ratings = np.loadtxt(data_set + '.base_ratings.csv', delimiter=',')
-    web = np.loadtxt(web_name, delimiter=',')
-    test_set_file = data_set + '.test'
-    ans = RMSE(test_set_file, original_ratings, default_neighbors, web)
+    test_set_file_name = directory+data_set + '.test'
+    ans = RMSE(test_set_file_name, data_set + '._ratings.csv', default_neighbors, web_name)
     logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
 
 
