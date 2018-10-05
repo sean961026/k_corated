@@ -14,7 +14,7 @@ user_size = 943
 item_size = 1682
 trust_choices = ['default', 'adjust']
 sim_choices = ['default', 'adjust']
-default_neighbors=[i for i in range(user_size)]
+default_neighbors = [i for i in range(user_size)]
 
 
 def get_users(user_file):
@@ -68,21 +68,24 @@ def co_rated_items(user1, user2):
 def co_bought_users(item1, item2):
     return list(supp_item(item1).intersection(supp_item(item2)))
 
-def co_rated_mean(user1,user2):
-    co_items=co_rated_items(user1,user2)
-    sum1=0
-    sum2=0
+
+def co_rated_mean(user1, user2):
+    co_items = co_rated_items(user1, user2)
+    sum1 = 0
+    sum2 = 0
     for item in co_items:
-        sum1+=user1[item]
-        sum2+=user2[item]
-    return sum1/len(co_items),sum2/len(co_items)
+        sum1 += user1[item]
+        sum2 += user2[item]
+    return sum1 / len(co_items), sum2 / len(co_items)
+
 
 def single_mean(user):
-    items=supp_user(user)
-    sum_u=0
+    items = supp_user(user)
+    sum_u = 0
     for item in items:
-        sum_u+=user[item]
-    return sum_u/len(items)
+        sum_u += user[item]
+    return sum_u / len(items)
+
 
 def user_sim(user1, user2, mode):
     if mode == 'default':
@@ -109,7 +112,7 @@ def user_trust(ratings, id_user1, id_user2, mode):
             return 0
         temp_sum = 0
         for item_id in share_items:
-            user1_mean,user2_mean=co_rated_mean(user1,user2)
+            user1_mean, user2_mean = co_rated_mean(user1, user2)
             temp_sum += 1 - abs(user1_mean + user2[item_id] - user2_mean - user1[item_id]) / rate_scale
         return temp_sum / len(share_items)
     elif mode == 'adjust':
@@ -122,7 +125,7 @@ def user_corated(user1, user2):
     return len(co_rated_items(user1, user2))
 
 
-def create_trust_web(original_ratings, mode,need_propogate):
+def create_trust_web(original_ratings, mode, need_propogate):
     def trust_propagation(ratings, id_user1, id_user2, trust_web):
         temp_mid = set()
         items_bought_by_user1 = supp_user(ratings[id_user1, :])
@@ -203,11 +206,11 @@ def pd_rating(ratings, user_id, item_id, neighbor_ids, web):
     user = ratings[user_id, :]
     weight_sum = 0
     weight_dif_sum = 0
-    single_user_mean=single_mean(user)
+    single_user_mean = single_mean(user)
     for neighbor_id in neighbor_ids:
         neighbor = ratings[neighbor_id, :]
-        if item_id in supp_user(neighbor):
-            neighbor_mean=co_rated_mean(user,neighbor)[1]
+        if web[user_id][neighbor_id] != 0 and item_id in supp_user(neighbor):
+            neighbor_mean = co_rated_mean(user, neighbor)[1]
             weight_temp = web[user_id][neighbor_id]
             weight_sum += weight_temp
             weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
@@ -226,33 +229,33 @@ def dump(filename, matrix):
 
 def main():
     # will create
-    #[data_set]_ratings.csv
-    #[data_set]_corated_web.csv
-    #[data_set]_[trust_mode]_trust_prop_web.csv
-    #[data_set]_[trust_mode]_trust_web.csv
-    #[data_set]_[sim_mode]_sim_web.csv
+    # [data_set]_ratings.csv
+    # [data_set]_corated_web.csv
+    # [data_set]_[trust_mode]_trust_prop_web.csv
+    # [data_set]_[trust_mode]_trust_web.csv
+    # [data_set]_[sim_mode]_sim_web.csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
     parser.add_argument('-d', '--dataset', required=True)
     parser.add_argument('-t', '--trust', choices=trust_choices)
     parser.add_argument('-s', '--sim', choices=sim_choices)
-    parser.add_argument('-p','--prop',action='store_true',default=False)
+    parser.add_argument('-p', '--prop', action='store_true', default=False)
     args = parser.parse_args()
     data_set = args.dataset
     trust_mode = args.trust
     sim_mode = args.sim
-    need_propogate=args.prop
-    rating_file = directory + data_set+'.base'
+    need_propogate = args.prop
+    rating_file = directory + data_set + '.base'
 
     if not os.path.exists(data_set + '_ratings.csv'):
         original_ratings = get_ratings(rating_file)
         dump(data_set + '_ratings', original_ratings)
     else:
-        original_ratings=np.loadtxt(data_set + '_ratings.csv',delimiter=',')
+        original_ratings = np.loadtxt(data_set + '_ratings.csv', delimiter=',')
     if not os.path.exists(data_set + '_corated_web.csv'):
         corated_web = create_corated_web(original_ratings)
         dump(data_set + '_corated_web', corated_web)
     if trust_mode:
-        trust_web = create_trust_web(original_ratings, trust_mode,need_propogate)
+        trust_web = create_trust_web(original_ratings, trust_mode, need_propogate)
         if need_propogate:
             dump(data_set + '_' + trust_mode + '_' + 'trust_prop_web', trust_web)
         else:
