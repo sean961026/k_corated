@@ -5,7 +5,8 @@ import random
 import numpy as np
 import argparse
 
-method_choices=['best','dist']
+method_choices = ['best', 'dist']
+
 
 def sim_rate(rate1, rate2):
     return math.exp(-abs(rate1 - rate2) / rate_scale)
@@ -62,7 +63,7 @@ def generate_aux(user, total, correct):
     items = list(supp_user(user))
     total_list = random.sample(items, total)
     correct_list = random.sample(total_list, correct)
-    aux = np.zeros(shape=(1, item_size))
+    aux = [0] * item_size
     for i in total_list:
         if i in correct_list:
             aux[i] = user[i]
@@ -71,7 +72,7 @@ def generate_aux(user, total, correct):
             avail_ratings = list(all_ratings - {user[i]})
             avail_ratings.sort()
             aux[i] = avail_ratings[random.randint(0, 3)]
-    return aux
+    return np.array(aux)
 
 
 def show_how_similar(aux, record, ratings):
@@ -112,22 +113,24 @@ def ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, para
             logging.info('found record %s similar to the aux of %s with the probability of %s', index, victim_id, pro)
             show_how_similar(aux, ratings[index, :], ratings)
 
+
 def main():
-    parser=argparse.ArgumentParser(description='a simulation of ns attack')
-    parser.add_argument('-r','--ratings',required=True)
-    parser.add_argument('-v','--victim',required=True,type=int)
-    parser.add_argument('-t','--total',required=True,type=int)
-    parser.add_argument('-c','--correct',required=True,type=int)
-    parser.add_argument('-m','--method',required=True,choices=method_choices)
-    parser.add_argument('-p','--param',required=True)
-    args=parser.parse_args()
-    ratings_file_name=args.ratings
-    victim_id=args.victim
-    total=args.total
-    correct=args.total
-    best_guess=args.method=='best'
-    param=args.param
-    ns_simulation(ratings_file_name,victim_id,total,correct,best_guess,param)
+    parser = argparse.ArgumentParser(description='a simulation of ns attack')
+    parser.add_argument('-r', '--ratings', required=True)
+    parser.add_argument('-v', '--victim', required=True, type=int)
+    parser.add_argument('-t', '--total', required=True, type=int)
+    parser.add_argument('-c', '--correct', required=True, type=int)
+    parser.add_argument('-m', '--method', required=True, choices=method_choices)
+    parser.add_argument('-p', '--param', required=True)
+    args = parser.parse_args()
+    ratings_file_name = args.ratings
+    victim_id = args.victim
+    total = args.total
+    correct = args.total
+    best_guess = args.method == 'best'
+    param = args.param
+    ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param)
+
 
 if __name__ == '__main__':
     main()
