@@ -28,6 +28,12 @@ def get_scores(aux, ratings):
         scores.append(score(aux, record, ratings))
     std = np.std(scores)
     logging.info('the std of the scores is %s', std)
+    temp = scores.copy()
+    max1 = max(temp)
+    temp.remove(max1)
+    max2 = max(temp)
+    threshold = (max1 - max2) / std
+    logging.info('(max1-max2)/std is %s', threshold)
     return scores
 
 
