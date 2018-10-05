@@ -128,3 +128,6 @@ def main():
     best_guess=args.method=='best'
     param=args.param
     ns_simulation(ratings_file_name,victim_id,total,correct,best_guess,param)
+
+if __name__ == '__main__':
+    main()
