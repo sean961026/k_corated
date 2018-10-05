@@ -75,23 +75,6 @@ def generate_aux(user, total, correct):
     return np.array(aux)
 
 
-def show_how_similar(aux, record, ratings):
-    logging.info(
-        'the first line is the index of the co rated items, the second line is the ratings of the aux information, the third line is the ratings of the record')
-    data = [i for i in range(item_size)]
-    data.extend(aux)
-    data.extend(record)
-    arr = np.array(data)
-    arr = np.reshape(arr, (3, item_size))
-    to_delete = []
-    for i in range(item_size):
-        if arr[1, i] == 0 and arr[2, i] == 0:
-            to_delete.append(i)
-    arr = np.delete(arr, to_delete, 1)
-    logging.info(arr)
-    s = score(aux, record, ratings)
-    logging.info('the score of the above 2 records is %s', s)
-
 
 def ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param):
     logging.info('simulation of NS Attack to the victim %s in the rating file %s', victim_id, ratings_file_name)
@@ -104,14 +87,12 @@ def ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, para
         if best_id:
             logging.info('found record %s most similar to the aux of %s with the eccentricity of ', best_id, victim_id,
                          param)
-            show_how_similar(aux, ratings[best_id, :], ratings)
         else:
             logging.info('found no record qualified with the eccentricity of %s', param)
     else:
         dist = top_N_from_en(scores, param)
         for pro, index in dist:
-            logging.info('found record %s similar to the aux of %s with the probability of %s', index, victim_id, pro)
-            show_how_similar(aux, ratings[index, :], ratings)
+            logging.info('record:%s\tpropability:%s', index, pro)
 
 
 def main():
