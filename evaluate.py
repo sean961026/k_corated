@@ -32,7 +32,7 @@ def main():
     data_set = args.dataset
     web_name = args.web
     test_set_file_name = directory+data_set + '.test'
-    ans = RMSE(test_set_file_name, data_set + '._ratings.csv', default_neighbors, web_name)
+    ans = RMSE(test_set_file_name, data_set + '_ratings.csv', default_neighbors, web_name)
     logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
 
 
