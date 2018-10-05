@@ -238,12 +238,10 @@ def main():
     parser.add_argument('-d', '--dataset', required=True)
     parser.add_argument('-t', '--trust', choices=trust_choices)
     parser.add_argument('-s', '--sim', choices=sim_choices)
-    parser.add_argument('-p', '--prop', action='store_true', default=False)
     args = parser.parse_args()
     data_set = args.dataset
     trust_mode = args.trust
     sim_mode = args.sim
-    need_propogate = args.prop
     rating_file = directory + data_set + '.base'
 
     if not os.path.exists(data_set + '_ratings.csv'):
@@ -255,11 +253,10 @@ def main():
         corated_web = create_corated_web(original_ratings)
         dump(data_set + '_corated_web', corated_web)
     if trust_mode:
-        trust_web = create_trust_web(original_ratings, trust_mode, need_propogate)
-        if need_propogate:
-            dump(data_set + '_' + trust_mode + '_' + 'trust_prop_web', trust_web)
-        else:
-            dump(data_set + '_' + trust_mode + '_' + 'trust_web', trust_web)
+        trust_web = create_trust_web(original_ratings, trust_mode, True)
+        dump(data_set + '_' + trust_mode + '_' + 'trust_prop_web', trust_web)
+        trust_web = create_trust_web(original_ratings, trust_mode, False)
+        dump(data_set + '_' + trust_mode + '_' + 'trust_web', trust_web)
     if sim_mode:
         sim_web = create_sim_web(original_ratings, sim_mode)
         dump(data_set + '_' + sim_mode + '_' + 'sim_web', sim_web)
