@@ -160,7 +160,7 @@ def create_sim_web(original_ratings, mode):
     logging.info('start to fill sim web')
     for i in range(user_size):
         if i / 100 == hundred:
-            logging.info('filling trust web, line %s00+', hundred)
+            logging.info('filling sim web, line %s00+', hundred)
             hundred += 1
         for j in range(user_size):
             if i == j:
@@ -209,34 +209,41 @@ def dump(filename, matrix):
 
 
 def main():
+    # will create
+    #[data_set]_ratings.csv
+    #[data_set]_corated_web.csv
+    #[data_set]_[trust_mode]_trust_prop_web.csv
+    #[data_set]_[trust_mode]_trust_web.csv
+    #[data_set]_[sim_mode]_sim_web.csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
-    parser.add_argument('-f', '--file', required=True)
+    parser.add_argument('-d', '--dataset', required=True)
     parser.add_argument('-t', '--trust', choices=trust_choices)
     parser.add_argument('-s', '--sim', choices=sim_choices)
     parser.add_argument('-p','--prop',action='store_true',default=False)
     args = parser.parse_args()
-    input_rating_file = args.file
+    data_set = args.dataset
     trust_mode = args.trust
     sim_mode = args.sim
     need_propogate=args.prop
-    rating_file = directory + input_rating_file
-    if not os.path.exists(input_rating_file + '_ratings.csv'):
+    rating_file = directory + data_set+'.base'
+
+    if not os.path.exists(data_set + '_ratings.csv'):
         original_ratings = get_ratings(rating_file)
-        dump(input_rating_file + '_ratings', original_ratings)
+        dump(data_set + '_ratings', original_ratings)
     else:
-        original_ratings=np.loadtxt(input_rating_file + '_ratings.csv',delimiter=',')
-    if not os.path.exists(input_rating_file + '_corated_web.csv'):
+        original_ratings=np.loadtxt(data_set + '_ratings.csv',delimiter=',')
+    if not os.path.exists(data_set + '_corated_web.csv'):
         corated_web = create_corated_web(original_ratings)
-        dump(input_rating_file + '_corated_web', corated_web)
+        dump(data_set + '_corated_web', corated_web)
     if trust_mode:
         trust_web = create_trust_web(original_ratings, trust_mode,need_propogate)
         if need_propogate:
-            dump(input_rating_file + '_' + trust_mode + '_' + 'trust_prop_web', trust_web)
+            dump(data_set + '_' + trust_mode + '_' + 'trust_prop_web', trust_web)
         else:
-            dump(input_rating_file + '_' + trust_mode + '_' + 'trust_web', trust_web)
+            dump(data_set + '_' + trust_mode + '_' + 'trust_web', trust_web)
     if sim_mode:
         sim_web = create_sim_web(original_ratings, sim_mode)
-        dump(input_rating_file + '_' + sim_mode + '_' + 'sim_web', sim_web)
+        dump(data_set + '_' + sim_mode + '_' + 'sim_web', sim_web)
 
 
 if __name__ == '__main__':

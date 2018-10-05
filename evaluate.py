@@ -1,39 +1,40 @@
-from rs import pd_rating,directory,users
+from rs import pd_rating, directory, user_size
 import numpy as np
 import math
-import sys
+import argparse
 import logging
 
-input_orginal_ratings_file=sys.argv[1]
-default_neighbors=[i for i in range(len(users))]
-default_predict_fun=pd_rating
-input_mode=sys.argv[2]
+dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
+default_neighbors = [i for i in range(user_size)]
 
 
-def RMSE(test_set_file,predict_fun,**kwargs):
-    test_set=np.loadtxt(directory+test_set_file,delimiter='\t')
-    size=test_set.shape[0]
-    total=0
+def RMSE(test_set_file, base_ratings, neighbor_ids, web):
+    original_ratings = np.loadtxt(base_ratings, delimiter=',')
+    test_set = np.loadtxt(directory + test_set_file, delimiter='\t')
+    size = test_set.shape[0]
+    total = 0
     for i in range(size):
-        record=test_set[i,:]
-        test_user=int(record[0]-1)
-        test_item=int(record[1]-1)
-        kwargs.update({'user_id':test_user,'item_id':test_item})
-        if 'neighbor_ids' not in kwargs:
-            kwargs.update({'neighbor_ids': default_neighbors})
-        test_rating=record[2]
-        predicted_rating=predict_fun(**kwargs)
-        total+=(test_rating-predicted_rating)**2
-    return math.sqrt(total/size)
+        record = test_set[i, :]
+        test_user = int(record[0] - 1)
+        test_item = int(record[1] - 1)
+        test_rating = record[2]
+        predicted_rating = pd_rating(original_ratings, test_user, test_item, neighbor_ids, web)
+        total += (test_rating - predicted_rating) ** 2
+    return math.sqrt(total / size)
+
 
 def main():
-    original_ratings=np.loadtxt(input_orginal_ratings_file+'_ratings.csv',delimiter=',')
-    trust_web=np.loadtxt(input_orginal_ratings_file+'_trust_web.csv',delimiter=',')
-    test_set_file=input_orginal_ratings_file[0:3]+'test'
-    #ratings, user_id, item_id, neighbor_ids, mode='default', trust_web=None
-    kwarg={'ratings':original_ratings,'neighbor_ids':default_neighbors,'mode':input_mode,'trust_web':trust_web}
-    ans=RMSE(test_set_file,default_predict_fun,**kwarg)
-    logging.info('the RMSE result of %s is %s',input_orginal_ratings_file,ans)
+    parser = argparse.ArgumentParser(description='RMSE test for a certain dataset')
+    parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
+    parser.add_argument('-w', '--web', required=True)
+    args = parser.parse_args()
+    data_set = args.dataset
+    web_name = args.web
+    original_ratings = np.loadtxt(data_set + '.base_ratings.csv', delimiter=',')
+    web = np.loadtxt(web_name, delimiter=',')
+    test_set_file = data_set + '.test'
+    ans = RMSE(test_set_file, original_ratings, default_neighbors, web)
+    logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
 
 
 if __name__ == '__main__':

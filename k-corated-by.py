@@ -142,11 +142,11 @@ def main():
     args=parser.parse_args()
     k=args.k
     web_name=args.web
-    ratings_name=args.file
+    ratings_name=args.ratings
     with_index,without_index=k_corate(k,ratings_name,web_name)
-    filename='%s_corated_ratings_from_%s_by_%s_with_index' % (k,ratings_name[:7],web_name[8:-4])
+    filename='%s_corated_ratings_from_%s_by_%s_with_index' % (k,ratings_name[:-4],web_name[:-4])
     dump(filename,with_index)
-    filename = '%s_corated_ratings_from_%s_by_%s_without_index' % (k, ratings_name[:7], web_name[8:-4])
+    filename = '%s_corated_ratings_from_%s_by_%s_without_index' % (k, ratings_name[:-4], web_name[:-4])
     dump(filename,without_index)
 
 
