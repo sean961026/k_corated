@@ -120,7 +120,8 @@ def k_corate(k, ratings_name, web_name, nearest_neighbor_size):
     sorted_ratings = sort(ratings)
     logging.info('dividing the sorted ratings from %s', ratings_name)
     k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
-    logging.info('%s corating the non-%s-corated part by web:%s', k, k, web_name)
+    logging.info('%s corating the non-%s-corated part by web:%s from %s nearest neighbors', k, k, web_name,
+                 nearest_neighbor_size)
     k_corating(k, non_k_corated_part, ratings, web, nearest_neighbor_size)
     logging.info('combing two parts into one')
     if k_coreted_part is not None:
