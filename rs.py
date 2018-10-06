@@ -14,7 +14,6 @@ user_size = 943
 item_size = 1682
 trust_choices = ['default', 'adjust']
 sim_choices = ['default', 'adjust']
-default_neighbors = [i for i in range(user_size)]
 
 
 def get_users(user_file):
@@ -202,14 +201,15 @@ def create_corated_web(original_ratings):
     return corated_web
 
 
-def pd_rating(ratings, user_id, item_id, neighbor_ids, web):
+def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
     user = ratings[user_id, :]
+    neighbor_ids = get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size)
     weight_sum = 0
     weight_dif_sum = 0
     single_user_mean = single_mean(user)
     for neighbor_id in neighbor_ids:
         neighbor = ratings[neighbor_id, :]
-        if web[user_id][neighbor_id] != 0 and item_id in supp_user(neighbor):
+        if web[user_id][neighbor_id] != 0:
             neighbor_mean = co_rated_mean(user, neighbor)[1]
             weight_temp = web[user_id][neighbor_id]
             weight_sum += weight_temp
@@ -220,6 +220,16 @@ def pd_rating(ratings, user_id, item_id, neighbor_ids, web):
     except:
         logging.warning('unexpected weight_sum==0')
         return single_user_mean
+
+
+def get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size):
+    candi_neighbors = supp_item(ratings[:, item_id])
+    candi_pairs = [(web[user_id, candi_neighbor], candi_neighbor) for candi_neighbor in candi_neighbors]
+    candi_pairs.sort(key=lambda x: x[0], reverse=True)
+    if N > len(candi_pairs):
+        return [x[1] for x in candi_pairs]
+    else:
+        return [candi_pairs[i][1] for i in range(nearest_neighbor_size)]
 
 
 def dump(filename, matrix):

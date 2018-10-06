@@ -1,11 +1,8 @@
-from rs import supp_user, user_size, item_size, pd_rating, default_neighbors,dump
+from rs import supp_user, user_size, item_size, pd_rating, dump
 from functools import cmp_to_key
 import numpy as np
 import logging
-import pandas as pd
 import argparse
-
-default_predict_fun = pd_rating
 
 
 def set_cmp(user1, user2):
@@ -87,7 +84,7 @@ def are_corated(ratings, start, end):
     return True, end + 1
 
 
-def k_corating(k, non_k_matrix, original_ratings, neighbor_ids, web):
+def k_corating(k, non_k_matrix, original_ratings, web, nearest_neighbors_size):
     remain = non_k_matrix.shape[0]
     start = 0
     while remain > 0:
@@ -111,12 +108,12 @@ def k_corating(k, non_k_matrix, original_ratings, neighbor_ids, web):
             for i in range(temp_range[0], temp_range[1]):
                 if non_k_matrix[i][item_id] == 0:
                     non_k_matrix[i][item_id] = pd_rating(original_ratings, int(non_k_matrix[i][-1]) - 1, item_id,
-                                                         neighbor_ids, web)
+                                                         web, nearest_neighbors_size)
         start = temp_range[1]
         remain -= temp_range[1] - temp_range[0]
 
 
-def k_corate(k, ratings_name, web_name, neighbor_ids=default_neighbors):
+def k_corate(k, ratings_name, web_name, nearest_neighbor_size):
     ratings = np.loadtxt(ratings_name, delimiter=',')
     web = np.loadtxt(web_name, delimiter=',')
     logging.info('sorting the ratings:%s', ratings_name)
@@ -124,31 +121,33 @@ def k_corate(k, ratings_name, web_name, neighbor_ids=default_neighbors):
     logging.info('dividing the sorted ratings from %s', ratings_name)
     k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
     logging.info('%s corating the non-%s-corated part by web:%s', k, k, web_name)
-    k_corating(k, non_k_corated_part, ratings, neighbor_ids, web)
+    k_corating(k, non_k_corated_part, ratings, web, nearest_neighbor_size)
     logging.info('combing two parts into one')
     if k_coreted_part is not None:
         ret = np.insert(k_coreted_part, k_coreted_part.shape[0], non_k_corated_part, 0)
     else:
         ret = non_k_corated_part
-    index_trans=ret[:,-1]
+    index_trans = ret[:, -1]
     ret = np.delete(ret, ret.shape[1] - 1, 1)
     return ret, index_trans
 
 
 def main():
-    parser=argparse.ArgumentParser(description='k corating a rating file by a certain web')
-    parser.add_argument('-r','--ratings',required=True)
-    parser.add_argument('-k',required=True,type=int)
-    parser.add_argument('-w','--web',required=True)
-    args=parser.parse_args()
-    k=args.k
-    web_name=args.web
-    ratings_name=args.ratings
-    with_index,index_trans=k_corate(k,ratings_name,web_name)
-    filename='%s_corated_ratings_from_%s_by_%s' % (k,ratings_name[:-4],web_name[:-4])
-    dump(filename,with_index)
+    parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
+    parser.add_argument('-r', '--ratings', required=True)
+    parser.add_argument('-k', required=True, type=int)
+    parser.add_argument('-w', '--web', required=True)
+    parser.add_argument('-n', '--neighbor', default=10, type=int)
+    args = parser.parse_args()
+    k = args.k
+    web_name = args.web
+    ratings_name = args.ratings
+    nearest_neighbor_size = args.neighbor
+    with_index, index_trans = k_corate(k, ratings_name, web_name, nearest_neighbor_size)
+    filename = '%s_corated_ratings_from_%s_by_%s' % (k, ratings_name[:-4], web_name[:-4])
+    dump(filename, with_index)
     filename = '%s_corated_ratings_from_%s_by_%s_index' % (k, ratings_name[:-4], web_name[:-4])
-    dump(filename,index_trans)
+    dump(filename, index_trans)
 
 
 if __name__ == '__main__':
