@@ -81,7 +81,6 @@ def generate_aux(user, total, correct):
     return np.array(aux)
 
 
-
 def ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param):
     logging.info('simulation of NS Attack to the victim %s in the rating file %s', victim_id, ratings_file_name)
     ratings = np.loadtxt(ratings_file_name, delimiter=',')
@@ -109,18 +108,32 @@ def main():
     parser.add_argument('-c', '--correct', required=True, type=int)
     parser.add_argument('-m', '--method', required=True, choices=method_choices)
     parser.add_argument('-p', '--param', required=True)
+    parser.add_argument('-k', '--kratings')
     args = parser.parse_args()
     ratings_file_name = args.ratings
     victim_id = args.victim
     total = args.total
     correct = args.total
     best_guess = args.method == 'best'
+    k_corated_ratings = args.kratings
     param = args.param
     if best_guess:
-        param=float(param)
+        param = float(param)
     else:
-        param=int(param)
-    ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param)
+        param = int(param)
+    if k_corated_ratings:
+        compare(ratings_file_name, k_corated_ratings, victim_id, total, correct, best_guess, param)
+    else:
+        ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param)
+
+
+def compare(original_ratings, k_corated_ratings, victim_id, total, correct, best_guess, param):
+    ns_simulation(original_ratings, victim_id, total, correct, best_guess, param)
+    index_file = k_corated_ratings[:-4] + '_index'
+    index = np.loadtxt(index_file)
+    index_data = [int(i) for i in index]
+    victim_id_in_k = index_data.index(victim_id)
+    ns_simulation(k_corated_ratings, victim_id_in_k, total, correct, best_guess, param)
 
 
 if __name__ == '__main__':
