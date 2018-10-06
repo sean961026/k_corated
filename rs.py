@@ -246,8 +246,8 @@ def main():
     # [data_set]_[sim_mode]_sim_web.csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
     parser.add_argument('-d', '--dataset', required=True)
-    parser.add_argument('-t', '--trust', choices=trust_choices)
-    parser.add_argument('-s', '--sim', choices=sim_choices)
+    parser.add_argument('-t', '--trust', choices=trust_choices, default='default')
+    parser.add_argument('-s', '--sim', choices=sim_choices, default='default')
     args = parser.parse_args()
     data_set = args.dataset
     trust_mode = args.trust
