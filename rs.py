@@ -218,7 +218,6 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
         assert weight_sum != 0
         return single_user_mean + weight_dif_sum / weight_sum
     except:
-        logging.warning('unexpected weight_sum==0')
         return single_user_mean
 
 
