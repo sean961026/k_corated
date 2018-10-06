@@ -81,11 +81,9 @@ def generate_aux(user, total, correct):
     return np.array(aux)
 
 
-def ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param):
+def ns_simulation(ratings_file_name, victim_id, aux, best_guess, param):
     logging.info('simulation of NS Attack to the victim %s in the rating file %s', victim_id, ratings_file_name)
     ratings = np.loadtxt(ratings_file_name, delimiter=',')
-    victim = ratings[victim_id, :]
-    aux = generate_aux(victim, total, correct)
     scores = get_scores(aux, ratings)
     if best_guess:
         best_id = de_anonymization(scores, param)
@@ -121,19 +119,21 @@ def main():
         param = float(param)
     else:
         param = int(param)
+    original_ratings = np.loadtxt(ratings_file_name, delimiter=',')
+    aux = generate_aux(original_ratings[victim_id, :], total, correct)
     if k_corated_ratings:
-        compare(ratings_file_name, k_corated_ratings, victim_id, total, correct, best_guess, param)
+        compare(ratings_file_name, k_corated_ratings, victim_id, aux, best_guess, param)
     else:
-        ns_simulation(ratings_file_name, victim_id, total, correct, best_guess, param)
+        ns_simulation(ratings_file_name, victim_id, aux, best_guess, param)
 
 
-def compare(original_ratings, k_corated_ratings, victim_id, total, correct, best_guess, param):
-    ns_simulation(original_ratings, victim_id, total, correct, best_guess, param)
+def compare(original_ratings, k_corated_ratings, victim_id, aux, best_guess, param):
+    ns_simulation(original_ratings, victim_id, aux, best_guess, param)
     index_file = k_corated_ratings[:-4] + '_index.csv'
     index = np.loadtxt(index_file)
     index_data = [int(i) - 1 for i in index]
     victim_id_in_k = index_data.index(victim_id)
-    ns_simulation(k_corated_ratings, victim_id_in_k, total, correct, best_guess, param)
+    ns_simulation(k_corated_ratings, victim_id_in_k, aux, best_guess, param)
 
 
 if __name__ == '__main__':
