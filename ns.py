@@ -129,7 +129,7 @@ def main():
 
 def compare(original_ratings, k_corated_ratings, victim_id, total, correct, best_guess, param):
     ns_simulation(original_ratings, victim_id, total, correct, best_guess, param)
-    index_file = k_corated_ratings[:-4] + '_index'
+    index_file = k_corated_ratings[:-4] + '_index.csv'
     index = np.loadtxt(index_file)
     index_data = [int(i) for i in index]
     victim_id_in_k = index_data.index(victim_id)
