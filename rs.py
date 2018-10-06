@@ -226,7 +226,7 @@ def get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size):
     candi_neighbors = supp_item(ratings[:, item_id])
     candi_pairs = [(web[user_id, candi_neighbor], candi_neighbor) for candi_neighbor in candi_neighbors]
     candi_pairs.sort(key=lambda x: x[0], reverse=True)
-    if N > len(candi_pairs):
+    if nearest_neighbor_size > len(candi_pairs):
         return [x[1] for x in candi_pairs]
     else:
         return [candi_pairs[i][1] for i in range(nearest_neighbor_size)]
