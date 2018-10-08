@@ -113,7 +113,7 @@ def simulation():
     total = args.total
     correct = args.total
     best_guess = args.method == 'best'
-    k_corated_ratings = args.kratings
+    k_corated_ratings_file = args.kratings
     param = args.param
     if best_guess:
         param = float(param)
@@ -121,33 +121,35 @@ def simulation():
         param = int(param)
     original_ratings = np.loadtxt(ratings_file_name, delimiter=',')
     aux = generate_aux(original_ratings[victim_id, :], total, correct)
-    if k_corated_ratings:
-        compare(ratings_file_name, k_corated_ratings, victim_id, aux, best_guess, param)
+    if k_corated_ratings_file:
+        compare(ratings_file_name, k_corated_ratings_file, victim_id, aux, best_guess, param)
     else:
         ns_simulation(ratings_file_name, victim_id, aux, best_guess, param)
 
 
-def compare(original_ratings, k_corated_ratings, victim_id, aux, best_guess, param):
-    ns_simulation(original_ratings, victim_id, aux, best_guess, param)
-    victim_id_in_k = id_transfer(k_corated_ratings, victim_id)
-    ns_simulation(k_corated_ratings, victim_id_in_k, aux, best_guess, param)
+def compare(original_ratings_file, k_corated_ratings_file, victim_id, aux, best_guess, param):
+    ns_simulation(original_ratings_file, victim_id, aux, best_guess, param)
+    victim_id_in_k = id_transfer(k_corated_ratings_file, victim_id)
+    ns_simulation(k_corated_ratings_file, victim_id_in_k, aux, best_guess, param)
 
 
-def id_transfer(k_corated_ratings, victim_id):
-    index_file = k_corated_ratings[:-4] + '_index.csv'
+def id_transfer(k_corated_ratings_file, victim_id):
+    index_file = k_corated_ratings_file[:-4] + '_index.csv'
     index = np.loadtxt(index_file)
     index_data = [int(i) - 1 for i in index]
     victim_id_in_k = index_data.index(victim_id)
     return victim_id_in_k
 
 
-def sa2best_guess(original_ratings, k_corated_ratings, total, correct, eccen):
+def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct, eccen):
     success = 0
+    original_ratings = np.loadtxt(original_ratings_file, delimiter=',')
+    k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
     for i in range(user_size):
         aux = generate_aux(original_ratings[i, :], total, correct)
         scores = get_scores(aux, k_corated_ratings)
         ans = de_anonymization(scores, eccen)
-        id_in_k = id_transfer(k_corated_ratings, i)
+        id_in_k = id_transfer(k_corated_ratings_file, i)
         if ans == id_in_k:
             success += 1
     return success / user_size
@@ -168,15 +170,13 @@ def statistical_analysis():
     best_guess = args.method == 'best'
     k_corated_ratings_file = args.kratings
     param = args.param
-    original_ratings = np.loadtxt(ratings_file_name, delimiter=',')
-    k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
     if best_guess:
         param = float(param)
     else:
         param = int(param)
     result = 0
     for i in range(10):
-        result += sa2best_guess(original_ratings, k_corated_ratings, total, correct, param)
+        result += sa2best_guess(ratings_file_name, k_corated_ratings_file, total, correct, param)
     logging.info('the probability is %s', result / 10)
 
 
