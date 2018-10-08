@@ -153,7 +153,6 @@ def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct,
     k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
     sample = random.sample(range(user_size), sample_size)
     for i in sample:
-        logging.info('user %s', i)
         aux = generate_aux(original_ratings[i, :], total, correct)
         scores = get_scores(aux, k_corated_ratings)
         ans = de_anonymization(scores, eccen)
@@ -172,9 +171,9 @@ def statistical_analysis():
     parser.add_argument('-c', '--correct', required=True, type=int)
     parser.add_argument('-m', '--method', required=True, choices=method_choices)
     parser.add_argument('-p', '--param', required=True)
-    parser.add_argument('-k', '--kratings')
-    parser.add_argument('-s', '--sample', type=int, required=True, default=200)
-    parser.add_argument('--trial', required=True, type=int, default=3)
+    parser.add_argument('-k', '--kratings', required=True)
+    parser.add_argument('-s', '--sample', type=int, required=True)
+    parser.add_argument('--trial', required=True, type=int)
     args = parser.parse_args()
     ratings_file_name = args.ratings
     total = args.total
@@ -191,7 +190,7 @@ def statistical_analysis():
     result = 0
     for i in range(trial_size):
         result += sa2best_guess(ratings_file_name, k_corated_ratings_file, total, correct, param, sample_size)
-    logging.info('the probability is %s', result / 10)
+    logging.info('the probability is %s', result / trial_size)
 
 
 if __name__ == '__main__':
