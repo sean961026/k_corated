@@ -147,11 +147,12 @@ def id_transfer(k_corated_ratings_file, victim_id):
     return victim_id_in_k
 
 
-def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct, eccen):
+def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct, eccen, sample_size):
     success = 0
     original_ratings = np.loadtxt(original_ratings_file, delimiter=',')
     k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
-    for i in range(user_size):
+    sample = random.sample(range(user_size), sample_size)
+    for i in sample:
         logging.info('user %s', i)
         aux = generate_aux(original_ratings[i, :], total, correct)
         scores = get_scores(aux, k_corated_ratings)
@@ -159,7 +160,9 @@ def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct,
         id_in_k = id_transfer(k_corated_ratings_file, i)
         if ans == id_in_k:
             success += 1
-    return success / user_size
+    ret = success / user_size
+    logging.info('the probability of one sample is %s', ret)
+    return ret
 
 
 def statistical_analysis():
@@ -170,6 +173,8 @@ def statistical_analysis():
     parser.add_argument('-m', '--method', required=True, choices=method_choices)
     parser.add_argument('-p', '--param', required=True)
     parser.add_argument('-k', '--kratings')
+    parser.add_argument('-s', '--sample', type=int, required=True, default=200)
+    parser.add_argument('--trial', required=True, type=int, default=3)
     args = parser.parse_args()
     ratings_file_name = args.ratings
     total = args.total
@@ -177,13 +182,15 @@ def statistical_analysis():
     best_guess = args.method == 'best'
     k_corated_ratings_file = args.kratings
     param = args.param
+    sample_size = args.sample
+    trial_size = args.trial
     if best_guess:
         param = float(param)
     else:
         param = int(param)
     result = 0
-    for i in range(10):
-        result += sa2best_guess(ratings_file_name, k_corated_ratings_file, total, correct, param)
+    for i in range(trial_size):
+        result += sa2best_guess(ratings_file_name, k_corated_ratings_file, total, correct, param, sample_size)
     logging.info('the probability is %s', result / 10)
 
 
