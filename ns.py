@@ -70,7 +70,7 @@ def generate_aux(user, total, correct):
     if total < len(items):
         total_list = random.sample(items, total)
     else:
-        logging.info('cannot sample,size is %s', len(items))
+        logging.debug('cannot sample,size is %s', len(items))
         total_list = items
     if correct < len(total_list):
         correct_list = random.sample(total_list, correct)
