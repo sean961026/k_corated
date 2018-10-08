@@ -160,10 +160,9 @@ def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct,
         scores = get_scores(aux, k_corated_ratings)
         ans = de_anonymization(scores, eccen)
         id_in_k = id_transfer(k_corated_ratings_file, i)
-        logging.info('(victim,ans) is (%s,%s)', id_in_k, ans)
         if ans == id_in_k:
             success += 1
-    ret = success / user_size
+    ret = success / sample_size
     logging.info('the probability of one sample is %s', ret)
     return ret
 
