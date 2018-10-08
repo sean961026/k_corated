@@ -33,7 +33,7 @@ def get_scores(aux, ratings):
     temp.remove(max1)
     max2 = max(temp)
     threshold = (max1 - max2) / std
-    logging.info('(max1,max2,std,threshold) is (%s,%s,%s,%s)', max1, max2, std, threshold)
+    logging.debug('(max1,max2,std,threshold) is (%s,%s,%s,%s)', max1, max2, std, threshold)
     return scores
 
 
