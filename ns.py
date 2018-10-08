@@ -27,13 +27,13 @@ def get_scores(aux, ratings):
         record = ratings[i, :]
         scores.append(score(aux, record, ratings))
     std = np.std(scores)
-    logging.info('the std of the scores is %s', std)
+    logging.debug('the std of the scores is %s', std)
     temp = scores.copy()
     max1 = max(temp)
     temp.remove(max1)
     max2 = max(temp)
     threshold = (max1 - max2) / std
-    logging.info('(max1-max2)/std is %s', threshold)
+    logging.debug('(max1-max2)/std is %s', threshold)
     return scores
 
 
@@ -146,6 +146,7 @@ def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct,
     original_ratings = np.loadtxt(original_ratings_file, delimiter=',')
     k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
     for i in range(user_size):
+        logging.info('user %s', i)
         aux = generate_aux(original_ratings[i, :], total, correct)
         scores = get_scores(aux, k_corated_ratings)
         ans = de_anonymization(scores, eccen)
