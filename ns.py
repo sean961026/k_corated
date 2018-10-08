@@ -67,8 +67,14 @@ def top_N_from_en(scores, N):
 
 def generate_aux(user, total, correct):
     items = list(supp_user(user))
-    total_list = random.sample(items, total)
-    correct_list = random.sample(total_list, correct)
+    if total < len(items):
+        total_list = random.sample(items, total)
+    else:
+        total_list = items
+    if correct < len(total_list):
+        correct_list = random.sample(total_list, correct)
+    else:
+        correct_list = total_list
     aux = [0] * item_size
     for i in total_list:
         if i in correct_list:
