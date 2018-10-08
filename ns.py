@@ -4,6 +4,7 @@ import math
 import random
 import numpy as np
 import argparse
+import os
 
 method_choices = ['best', 'dist']
 
@@ -141,6 +142,8 @@ def compare(original_ratings_file, k_corated_ratings_file, victim_id, aux, best_
 
 def id_transfer(k_corated_ratings_file, victim_id):
     index_file = k_corated_ratings_file[:-4] + '_index.csv'
+    if not os.path.exists(index_file):
+        return victim_id
     index = np.loadtxt(index_file)
     index_data = [int(i) - 1 for i in index]
     victim_id_in_k = index_data.index(victim_id)
@@ -172,8 +175,8 @@ def statistical_analysis():
     parser.add_argument('-m', '--method', required=True, choices=method_choices)
     parser.add_argument('-p', '--param', required=True)
     parser.add_argument('-k', '--kratings', required=True)
-    parser.add_argument('-s', '--sample', type=int, required=True)
-    parser.add_argument('--trial', required=True, type=int)
+    parser.add_argument('-s', '--sample', type=int, default=200)
+    parser.add_argument('--trial', type=int, default=3)
     args = parser.parse_args()
     ratings_file_name = args.ratings
     total = args.total
