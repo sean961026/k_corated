@@ -34,7 +34,7 @@ def get_scores(aux, ratings):
     temp.remove(max1)
     max2 = max(temp)
     threshold = (max1 - max2) / std
-    logging.info('(max1-max2)/std is %s', threshold)
+    logging.debug('(max1-max2)/std is %s', threshold)
     return scores
 
 
@@ -48,7 +48,6 @@ def de_anonymization(scores, eccen):
         return None
     else:
         best_id = scores.index(max1)
-        logging.info('best id is %s', best_id)
         return best_id
 
 
@@ -161,6 +160,7 @@ def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct,
         scores = get_scores(aux, k_corated_ratings)
         ans = de_anonymization(scores, eccen)
         id_in_k = id_transfer(k_corated_ratings_file, i)
+        logging.info('(victim,ans) is (%s,%s)', id_in_k, ans)
         if ans == id_in_k:
             success += 1
     ret = success / user_size
