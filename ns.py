@@ -45,6 +45,7 @@ def de_anonymization(scores, eccen):
     temp.remove(max1)
     max2 = max(temp)
     if (max1 - max2) / std < eccen:
+        logging.info('(max1-max2)/std is %s', (max1 - max2) / std)
         return None
     else:
         best_id = scores.index(max1)
