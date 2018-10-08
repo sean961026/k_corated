@@ -166,9 +166,10 @@ def statistical_analysis():
     total = args.total
     correct = args.total
     best_guess = args.method == 'best'
-    k_corated_ratings = args.kratings
+    k_corated_ratings_file = args.kratings
     param = args.param
     original_ratings = np.loadtxt(ratings_file_name, delimiter=',')
+    k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
     if best_guess:
         param = float(param)
     else:
@@ -177,6 +178,7 @@ def statistical_analysis():
     for i in range(10):
         result += sa2best_guess(original_ratings, k_corated_ratings, total, correct, param)
     logging.info('the probability is %s', result / 10)
+
 
 if __name__ == '__main__':
     statistical_analysis()
