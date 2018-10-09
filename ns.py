@@ -32,6 +32,7 @@ def get_scores(aux, ratings):
 
 
 def generate_auxs(ratings, total, correct):
+    logging.info('generating auxs from ratings')
     auxs = []
     for i in range(ratings.shape[0]):
         aux = generate_aux(ratings, i, total, correct)
@@ -226,7 +227,6 @@ def main():
     correct = args.correct
     eccen = args.eccen
     N = args.n
-    logging.info('generating auxs from ratings')
     auxs = generate_auxs(ratings, total, correct)
     statistical_analysis(ratings, auxs, eccen, N)
 
