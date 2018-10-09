@@ -99,6 +99,7 @@ def generate_aux(original_ratings, user_id, total, correct):
 
 
 def de_attack_2_all(ratings, auxs, eccen):
+    logging.info('attacking the ratings by best guess')
     record_size = ratings.shape[0]
     result = []
     for i in range(record_size):
@@ -117,6 +118,7 @@ def de_attack_2_all(ratings, auxs, eccen):
 
 
 def en_attack_2_all(ratings, auxs, N):
+    logging.info('attacking the ratings by distribution')
     dists = []
     record_size = ratings.shape[0]
     for i in range(record_size):
@@ -154,6 +156,7 @@ def id_transfer(k_corated_ratings_file, victim_id):
 
 
 def sa2de_all(result):
+    logging.info('analyzing the result of best guess')
     success_list = []
     no_match_list = []
     wrong_match_list = []
@@ -181,37 +184,33 @@ def sa2de_all(result):
             'wrong_match_rate': len(wrong_match_list) / len(result), 'attack_size': len(result)}
 
 
-def statistical_analysis(ratings, total, correct, eccen, N):
-    logging.info('generating auxs from ratings')
-    auxs = generate_auxs(ratings, total, correct)
-
-    logging.info('attacking the ratings by best guess')
-    result = de_attack_2_all(ratings, auxs, eccen)
-
-    logging.info('analyzing the result of best guess')
-    analysis_data = sa2de_all(result)
-    logging.info(analysis_data)
-
-    logging.info('attacking the ratings by distribution')
-    dists = en_attack_2_all(ratings, auxs, N)
-
-    logging.info('analyzing the result of distribution on those best-guess-failure cases')
-    for i in range(len(result)):
-        success = result[i][0]
-        threshold = result[i][1]
-        if success != 1:
-            if success == 0:
-                reason = 'wrong_match'
-            else:
-                reason = 'no_match'
-            target_record = ratings[i, :]
-            dist = dists[i]
-            fitting_record = sa2dist(dist, ratings, target_record)
-            base_score = score(target_record, target_record, ratings)
-            fitting_score = score(fitting_record, target_record, ratings)
-            analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'base_score': base_score,
-                             'fitting_score': fitting_score, 'percent': fitting_score / base_score}
-            logging.info(analysis_data)
+def statistical_analysis(ratings, auxs, eccen, N):
+    if eccen and N:
+        result = de_attack_2_all(ratings, auxs, eccen)
+        analysis_data = sa2de_all(result)
+        logging.info(analysis_data)
+        dists = en_attack_2_all(ratings, auxs, N)
+        logging.info('analyzing the result of distribution on those best-guess-failure cases')
+        for i in range(len(result)):
+            success = result[i][0]
+            threshold = result[i][1]
+            if success != 1:
+                if success == 0:
+                    reason = 'wrong_match'
+                else:
+                    reason = 'no_match'
+                target_record = ratings[i, :]
+                dist = dists[i]
+                fitting_record = sa2dist(dist, ratings, target_record)
+                base_score = score(target_record, target_record, ratings)
+                fitting_score = score(fitting_record, target_record, ratings)
+                analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'base_score': base_score,
+                                 'fitting_score': fitting_score, 'percent': fitting_score / base_score}
+                logging.info(analysis_data)
+    elif eccen and N is None:
+        result = de_attack_2_all(ratings, auxs, eccen)
+        analysis_data = sa2de_all(result)
+        logging.info(analysis_data)
 
 
 def main():
@@ -219,15 +218,17 @@ def main():
     parser.add_argument('-r', '--ratings', required=True)
     parser.add_argument('-t', '--total', required=True, type=int)
     parser.add_argument('-c', '--correct', required=True, type=int)
-    parser.add_argument('-e', '--eccen', type=float, required=True)
-    parser.add_argument('-n', type=int, required=True)
+    parser.add_argument('-e', '--eccen', type=float)
+    parser.add_argument('-n', type=int)
     args = parser.parse_args()
     ratings = np.loadtxt(args.ratings, delimiter=',')
     total = args.total
     correct = args.correct
     eccen = args.eccen
     N = args.n
-    statistical_analysis(ratings, total, correct, eccen, N)
+    logging.info('generating auxs from ratings')
+    auxs = generate_auxs(ratings, total, correct)
+    statistical_analysis(ratings, auxs, eccen, N)
 
 
 if __name__ == '__main__':
