@@ -31,6 +31,14 @@ def get_scores(aux, ratings):
     return scores
 
 
+def generate_auxs(ratings, total, correct):
+    auxs = []
+    for i in range(ratings.shape[0]):
+        aux = generate_aux(ratings, i, total, correct)
+        auxs.append(aux)
+    return auxs
+
+
 def analyze_scores(scores):
     std = np.std(scores)
     temp = scores.copy()
@@ -42,15 +50,12 @@ def analyze_scores(scores):
 
 
 def de_anonymization(scores, eccen):
-    temp = scores.copy()
-    std = np.std(temp)
-    max1 = max(temp)
-    temp.remove(max1)
-    max2 = max(temp)
-    if (max1 - max2) / std < eccen:
+    data = analyze_scores(scores)
+    threshold = data['threshold']
+    if threshold < eccen:
         return None
     else:
-        best_id = scores.index(max1)
+        best_id = scores.index(data['max1'])
         return best_id
 
 
@@ -93,26 +98,29 @@ def generate_aux(original_ratings, user_id, total, correct):
     return np.array(aux)
 
 
-def de_attack_2_all(ratings, total, correct, eccen):
+def de_attack_2_all(ratings, auxs, eccen):
     record_size = ratings.shape[0]
-    result = [(0, 0)] * record_size
+    result = []
     for i in range(record_size):
-        aux = generate_aux(ratings, i, total, correct)
+        aux = auxs[i]
         scores = get_scores(aux, ratings)
         ans = de_anonymization(scores, eccen)
         threshold = analyze_scores(scores)['threshold']
-        if ans == i:
-            result[i] = (1, threshold)
+        if ans is None:
+            result.append((None, threshold))
         else:
-            result[i] = (0, threshold)
+            if ans == i:
+                result.append((1, threshold))
+            else:
+                result.append((0, threshold))
     return result
 
 
-def en_attack_2_all(ratings, total, correct, N):
+def en_attack_2_all(ratings, auxs, N):
     dists = []
     record_size = ratings.shape[0]
     for i in range(record_size):
-        aux = generate_aux(ratings, i, total, correct)
+        aux = auxs[i]
         scores = get_scores(aux, ratings)
         dist = top_N_from_en(scores, N)
         dists.append(dist)
@@ -146,47 +154,64 @@ def id_transfer(k_corated_ratings_file, victim_id):
 
 
 def sa2de_all(result):
-    success_list = [i[0] for i in result]
-    thresholds = [i[1] for i in result]
-    success = sum(success_list)
-    sucess_rate = success / len(result)
-    success_thresholds = []
-    failure_thresholds = []
-    for suc, threshold in result:
-        if suc:
-            success_thresholds.append(threshold)
+    success_list = []
+    no_match_list = []
+    wrong_match_list = []
+    thresholds = []
+    for i in range(len(result)):
+        threshold = result[i][1]
+        thresholds.append(threshold)
+        if result[i][0] == None:
+            no_match_list.append(i)
         else:
-            failure_thresholds.append(threshold)
-    min_sucess_threshold = min(success_thresholds)
-    max_failure_threshold = max(failure_thresholds)
+            if result[i][0] == 0:
+                wrong_match_list.append(i)
+            else:
+                success_list.append(i)
+
     min_int_threshold = int(min(thresholds))
     max_int_threshold = int(max(thresholds)) + 1
     bins = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
     plt.hist(thresholds, bins=bins)
     plt.savefig('threshold.jpg')
-    return {'min_sucess_threshold': min_sucess_threshold, 'max_failure_threshold': max_failure_threshold,
-            'success_rate': sucess_rate}
+    max_no_match_ts = result[max(no_match_list, key=lambda x: result[x][1])][1]
+    min_sucess_ts = result[min(success_list, key=lambda x: result[x][1])][1]
+    return {'min_sucess_ts': min_sucess_ts, 'max_no_match_ts': max_no_match_ts,
+            'success_rate': len(success_list) / len(result), 'no_match_rate': len(no_match_list) / len(result),
+            'wrong_match_rate': len(wrong_match_list) / len(result), 'attack_size': len(result)}
 
 
 def statistical_analysis(ratings, total, correct, eccen, N):
+    logging.info('generating auxs from ratings')
+    auxs = generate_auxs(ratings, total, correct)
+
     logging.info('attacking the ratings by best guess')
-    result = de_attack_2_all(ratings, total, correct, eccen)
-    logging.info('attacking the ratings by distribution')
-    dists = en_attack_2_all(ratings, total, correct, N)
+    result = de_attack_2_all(ratings, auxs, eccen)
+
     logging.info('analyzing the result of best guess')
     analysis_data = sa2de_all(result)
     logging.info(analysis_data)
+
+    logging.info('attacking the ratings by distribution')
+    dists = en_attack_2_all(ratings, auxs, N)
+
+    logging.info('analyzing the result of distribution on those best-guess-failure cases')
     for i in range(len(result)):
-        sucess = result[i][0]
+        success = result[i][0]
         threshold = result[i][1]
-        if not sucess:
+        if success != 1:
+            if success == 0:
+                reason = 'wrong_match'
+            else:
+                reason = 'no_match'
             target_record = ratings[i, :]
             dist = dists[i]
-            result = sa2dist(dist, ratings, target_record)
+            fitting_record = sa2dist(dist, ratings, target_record)
             base_score = score(target_record, target_record, ratings)
-            result_score = score(result, target_record, ratings)
-            logging.info('failed_index:%s\tfailed_threshold:%s\tself_score:%s\tresult_score:%s\tpercent:%s', i,
-                         threshold, base_score, result_score, result_score / base_score)
+            fitting_score = score(fitting_record, target_record, ratings)
+            analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'base_score': base_score,
+                             'fitting_score': fitting_score, 'percent': fitting_score / base_score}
+            logging.info(analysis_data)
 
 
 def main():
