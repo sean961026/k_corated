@@ -146,14 +146,13 @@ def sa2dist(dist, ratings, target_record):
     return result
 
 
-def id_transfer(k_corated_ratings_file, victim_id):
-    index_file = k_corated_ratings_file[:-4] + '_index.csv'
+def get_id_translator(attack_ratings_file_name):
+    index_file = attack_ratings_file_name[:-4] + '_index.csv'
     if not os.path.exists(index_file):
-        return victim_id
+        return [i for i in range(user_size)]
     index = np.loadtxt(index_file)
     index_data = [int(i) - 1 for i in index]
-    victim_id_in_k = index_data.index(victim_id)
-    return victim_id_in_k
+    return index_data
 
 
 def sa2de_all(result):
@@ -222,13 +221,26 @@ def main():
     parser.add_argument('-e', '--eccen', type=float)
     parser.add_argument('-n', type=int)
     args = parser.parse_args()
-    ratings = np.loadtxt(args.ratings, delimiter=',')
+    ratings_to_attack = np.loadtxt(args.ratings, delimiter=',')
+    dataset_list = ['u1', 'u2', 'u3', 'u4', 'u5']
+    for dataset in dataset_list:
+        if dataset in args.ratings:
+            break
+    else:
+        logging.info('illegal ratings file')
+        return
+    ratings_to_gen_aux = np.loadtxt(dataset + '_ratings.csv', delimiter=',')
     total = args.total
     correct = args.correct
     eccen = args.eccen
     N = args.n
-    auxs = generate_auxs(ratings, total, correct)
-    statistical_analysis(ratings, auxs, eccen, N)
+    temp_auxs = generate_auxs(ratings_to_gen_aux, total, correct)
+    translator = get_id_translator(args.ratings)
+    auxs = [0] * len(temp_auxs)
+    for i in range(len(temp_auxs)):
+        index_in_attack = translator.index(i)
+        auxs[index_in_attack] = temp_auxs[i]
+    statistical_analysis(ratings_to_attack, auxs, eccen, N)
 
 
 if __name__ == '__main__':
