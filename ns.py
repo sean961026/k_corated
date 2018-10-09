@@ -177,8 +177,8 @@ def sa2de_all(result):
     bins = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
     plt.hist(thresholds, bins=bins)
     plt.savefig('threshold.jpg')
-    max_no_match_ts = result[max(no_match_list, key=lambda x: result[x][1])][1]
-    min_sucess_ts = result[min(success_list, key=lambda x: result[x][1])][1]
+    max_no_match_ts = result[max(no_match_list, key=lambda x: result[x][1])][1] if no_match_list else None
+    min_sucess_ts = result[min(success_list, key=lambda x: result[x][1])][1] if success_list else None
     return {'min_sucess_ts': min_sucess_ts, 'max_no_match_ts': max_no_match_ts,
             'success_rate': len(success_list) / len(result), 'no_match_rate': len(no_match_list) / len(result),
             'wrong_match_rate': len(wrong_match_list) / len(result), 'attack_size': len(result)}
