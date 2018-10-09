@@ -158,15 +158,17 @@ def sa2de_all(result):
     max_failure_threshold = max(failure_thresholds)
     min_int_threshold = int(min(thresholds))
     max_int_threshold = int(max(thresholds)) + 1
-    bin = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
-    plt.hist(thresholds, bin=bin)
+    bins = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
+    plt.hist(thresholds, bins=bins)
     plt.savefig('threshold.jpg')
     return {'min_sucess_threshold': min_sucess_threshold, 'max_failure_threshold': max_failure_threshold,
             'success_rate': sucess_rate}
 
 
 def statistical_analysis(ratings, total, correct, eccen, N):
+    logging.info('attacking the ratings by best guess')
     result = de_attack_2_all(ratings, total, correct, eccen)
+    logging.info('attacking the ratings by distribution')
     dists = en_attack_2_all(ratings, total, correct, N)
     analysis_data = sa2de_all(result)
     logging.info(analysis_data)
@@ -197,6 +199,7 @@ def main():
     eccen = args.eccen
     N = args.n
     statistical_analysis(ratings, total, correct, eccen, N)
+
 
 if __name__ == '__main__':
     main()
