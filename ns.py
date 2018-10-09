@@ -5,6 +5,7 @@ import random
 import numpy as np
 import argparse
 import os
+import matplotlib.pyplot as plt
 
 method_choices = ['best', 'dist']
 
@@ -27,14 +28,17 @@ def get_scores(aux, ratings):
     for i in range(user_size):
         record = ratings[i, :]
         scores.append(score(aux, record, ratings))
+    return scores
+
+
+def analyze_scores(scores):
     std = np.std(scores)
     temp = scores.copy()
     max1 = max(temp)
     temp.remove(max1)
     max2 = max(temp)
     threshold = (max1 - max2) / std
-    logging.debug('(max1,max2,std,threshold) is (%s,%s,%s,%s)', max1, max2, std, threshold)
-    return scores
+    return {'max1': max1, 'max2': max2, 'std': std, 'threshold': threshold}
 
 
 def de_anonymization(scores, eccen):
@@ -65,7 +69,8 @@ def top_N_from_en(scores, N):
     return [dist[i] for i in range(N)]
 
 
-def generate_aux(user, total, correct):
+def generate_aux(original_ratings, user_id, total, correct):
+    user = original_ratings[user_id, :]
     items = list(supp_user(user))
     if total < len(items):
         total_list = random.sample(items, total)
@@ -88,56 +93,43 @@ def generate_aux(user, total, correct):
     return np.array(aux)
 
 
-def ns_simulation(ratings_file_name, victim_id, aux, best_guess, param):
-    logging.info('simulation of NS Attack to the victim %s in the rating file %s', victim_id, ratings_file_name)
-    ratings = np.loadtxt(ratings_file_name, delimiter=',')
-    scores = get_scores(aux, ratings)
-    if best_guess:
-        best_id = de_anonymization(scores, param)
-        if best_id:
-            logging.info('found record %s most similar to the aux of %s with the eccentricity of ', best_id, victim_id,
-                         param)
-        else:
-            logging.info('found no record qualified with the eccentricity of %s', param)
-    else:
-        dist = top_N_from_en(scores, param)
-        for pro, index in dist:
-            logging.info('record:%s\tpropability:%s', index, pro)
+def de_attack_2_all(ratings, total, correct, eccen):
+    record_size = ratings.shape[0]
+    result = [(0, 0)] * record_size
+    for i in range(record_size):
+        aux = generate_aux(ratings, i, total, correct)
+        scores = get_scores(aux, ratings)
+        ans = de_anonymization(scores, eccen)
+        if ans == i:
+            result[i] = (1, analyze_scores(scores)['threshold'])
+    return result
 
 
-def simulation():
-    parser = argparse.ArgumentParser(description='a simulation of ns attack')
-    parser.add_argument('-r', '--ratings', required=True)
-    parser.add_argument('-v', '--victim', required=True, type=int)
-    parser.add_argument('-t', '--total', required=True, type=int)
-    parser.add_argument('-c', '--correct', required=True, type=int)
-    parser.add_argument('-m', '--method', required=True, choices=method_choices)
-    parser.add_argument('-p', '--param', required=True)
-    parser.add_argument('-k', '--kratings')
-    args = parser.parse_args()
-    ratings_file_name = args.ratings
-    victim_id = args.victim
-    total = args.total
-    correct = args.total
-    best_guess = args.method == 'best'
-    k_corated_ratings_file = args.kratings
-    param = args.param
-    if best_guess:
-        param = float(param)
-    else:
-        param = int(param)
-    original_ratings = np.loadtxt(ratings_file_name, delimiter=',')
-    aux = generate_aux(original_ratings[victim_id, :], total, correct)
-    if k_corated_ratings_file:
-        compare(ratings_file_name, k_corated_ratings_file, victim_id, aux, best_guess, param)
-    else:
-        ns_simulation(ratings_file_name, victim_id, aux, best_guess, param)
+def en_attack_2_all(ratings, total, correct, N):
+    dists = []
+    record_size = ratings.shape[0]
+    for i in range(record_size):
+        aux = generate_aux(ratings, i, total, correct)
+        scores = get_scores(aux, ratings)
+        dist = top_N_from_en(scores, N)
+        dists.append(dist)
+    return dists
 
 
-def compare(original_ratings_file, k_corated_ratings_file, victim_id, aux, best_guess, param):
-    ns_simulation(original_ratings_file, victim_id, aux, best_guess, param)
-    victim_id_in_k = id_transfer(k_corated_ratings_file, victim_id)
-    ns_simulation(k_corated_ratings_file, victim_id_in_k, aux, best_guess, param)
+def sa2dist(dist, ratings, target_record):
+    items = supp_user(target_record)
+    result = [0] * item_size
+    for item_id in items:
+        up_sum = 0
+        down_sum = 0
+        for prop, index in dist:
+            record = ratings[index, :]
+            if record[item_id] != 0:
+                up_sum += prop * record[item_id]
+                down_sum += prop
+        if down_sum != 0:
+            result[item_id] = up_sum / down_sum
+    return result
 
 
 def id_transfer(k_corated_ratings_file, victim_id):
@@ -150,51 +142,61 @@ def id_transfer(k_corated_ratings_file, victim_id):
     return victim_id_in_k
 
 
-def sa2best_guess(original_ratings_file, k_corated_ratings_file, total, correct, eccen, sample_size):
-    success = 0
-    original_ratings = np.loadtxt(original_ratings_file, delimiter=',')
-    k_corated_ratings = np.loadtxt(k_corated_ratings_file, delimiter=',')
-    sample = random.sample(range(user_size), sample_size)
-    for i in sample:
-        aux = generate_aux(original_ratings[i, :], total, correct)
-        scores = get_scores(aux, k_corated_ratings)
-        ans = de_anonymization(scores, eccen)
-        id_in_k = id_transfer(k_corated_ratings_file, i)
-        if ans == id_in_k:
-            success += 1
-    ret = success / sample_size
-    logging.info('the probability of one sample is %s', ret)
-    return ret
+def sa2de_all(result):
+    success_list = [i[0] for i in result]
+    thresholds = [i[1] for i in result]
+    success = sum(success_list)
+    sucess_rate = success / len(result)
+    success_thresholds = []
+    failure_thresholds = []
+    for suc, threshold in result:
+        if suc:
+            success_thresholds.append(threshold)
+        else:
+            failure_thresholds.append(threshold)
+    min_sucess_threshold = min(success_thresholds)
+    max_failure_threshold = max(failure_thresholds)
+    min_int_threshold = int(min(thresholds))
+    max_int_threshold = int(max(thresholds)) + 1
+    bin = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
+    plt.hist(thresholds, bin=bin)
+    plt.savefig('threshold.jpg')
+    return {'min_sucess_threshold': min_sucess_threshold, 'max_failure_threshold': max_failure_threshold,
+            'success_rate': sucess_rate}
 
 
-def statistical_analysis():
-    parser = argparse.ArgumentParser(description='a statistical analysis of ns attack')
+def statistical_analysis(ratings, total, correct, eccen, N):
+    result = de_attack_2_all(ratings, total, correct, eccen)
+    dists = en_attack_2_all(ratings, total, correct, N)
+    analysis_data = sa2de_all(result)
+    logging.info(analysis_data)
+    for i in range(len(result)):
+        sucess = result[i][0]
+        threshold = result[i][1]
+        if not sucess:
+            target_record = ratings[i, :]
+            dist = dists[i]
+            result = sa2dist(dist, ratings, target_record)
+            base_score = score(target_record, target_record, ratings)
+            result_score = score(result, target_record, ratings)
+            logging.info('failed_index:%s\tfailed_threshold:%s\tself_score:%s\tresult_score:%s\tpercent:%s', i,
+                         threshold, base_score, result_score, result_score / base_score)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='a ns attack simulation and statitical analysis')
     parser.add_argument('-r', '--ratings', required=True)
     parser.add_argument('-t', '--total', required=True, type=int)
     parser.add_argument('-c', '--correct', required=True, type=int)
-    parser.add_argument('-m', '--method', required=True, choices=method_choices)
-    parser.add_argument('-p', '--param', required=True)
-    parser.add_argument('-k', '--kratings', required=True)
-    parser.add_argument('-s', '--sample', type=int, default=200)
-    parser.add_argument('--trial', type=int, default=3)
+    parser.add_argument('-e', '--eccen', type=float, required=True)
+    parser.add_argument('-n', type=int, required=True)
     args = parser.parse_args()
-    ratings_file_name = args.ratings
+    ratings = np.loadtxt(args.ratings, delimiter=',')
     total = args.total
-    correct = args.total
-    best_guess = args.method == 'best'
-    k_corated_ratings_file = args.kratings
-    param = args.param
-    sample_size = args.sample
-    trial_size = args.trial
-    if best_guess:
-        param = float(param)
-    else:
-        param = int(param)
-    result = 0
-    for i in range(trial_size):
-        result += sa2best_guess(ratings_file_name, k_corated_ratings_file, total, correct, param, sample_size)
-    logging.info('the probability is %s', result / trial_size)
-
+    correct = args.correct
+    eccen = args.eccen
+    N = args.n
+    statistical_analysis(ratings, total, correct, eccen, N)
 
 if __name__ == '__main__':
-    statistical_analysis()
+    main()
