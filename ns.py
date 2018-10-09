@@ -100,8 +100,11 @@ def de_attack_2_all(ratings, total, correct, eccen):
         aux = generate_aux(ratings, i, total, correct)
         scores = get_scores(aux, ratings)
         ans = de_anonymization(scores, eccen)
+        threshold = analyze_scores(scores)['threshold']
         if ans == i:
-            result[i] = (1, analyze_scores(scores)['threshold'])
+            result[i] = (1, threshold)
+        else:
+            result[i] = (0, threshold)
     return result
 
 
@@ -170,6 +173,7 @@ def statistical_analysis(ratings, total, correct, eccen, N):
     result = de_attack_2_all(ratings, total, correct, eccen)
     logging.info('attacking the ratings by distribution')
     dists = en_attack_2_all(ratings, total, correct, N)
+    logging.info('analyzing the result of best guess')
     analysis_data = sa2de_all(result)
     logging.info(analysis_data)
     for i in range(len(result)):
