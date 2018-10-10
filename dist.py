@@ -15,7 +15,7 @@ def get_prop_dist_global(item_record):
     p = [0] * rate_scale
     rated_users = supp_item(item_record)
     for user_id in rated_users:
-        rating = int(item_record[user_id]）
+        rating = int(item_record[user_id])
         p[rating - 1] += 1
         s = sum(p)
     return [i / s for i in p]
