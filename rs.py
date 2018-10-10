@@ -223,12 +223,12 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
     try:
         assert weight_sum != 0
         ret = single_user_mean + weight_dif_sum / weight_sum
-        try:
-            assert ret <= rate_scale and ret >= 0
-        except AssertionError:
-            logging.info('%s\t%s', single_user_mean, weight_dif_sum / weight_sum)
-            return single_user_mean
-
+        if ret > rate_scale:
+            return rate_scale
+        elif ret < 0:
+            return 0
+        else:
+            return ret
     except:
         return single_user_mean
 
