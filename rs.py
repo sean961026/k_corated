@@ -213,7 +213,6 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
     weight_sum = 0
     weight_dif_sum = 0
     single_user_mean = single_mean(user)
-    data = []
     for neighbor_id in neighbor_ids:
         neighbor = ratings[neighbor_id, :]
         if web[user_id][neighbor_id] != 0:
@@ -221,14 +220,13 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
             weight_temp = web[user_id][neighbor_id]
             weight_sum += weight_temp
             weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
-            data.append((weight_temp, ratings[neighbor_id, item_id] - neighbor_mean))
     try:
         assert weight_sum != 0
         ret = single_user_mean + weight_dif_sum / weight_sum
         try:
             assert ret <= rate_scale and ret >= 0
         except AssertionError:
-            logging.info(data)
+            logging.info('%s\t%s', single_user_mean, weight_dif_sum / weight_sum)
             return single_user_mean
 
     except:
