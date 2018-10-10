@@ -208,6 +208,7 @@ def statistical_analysis(ratings, auxs, eccen, N):
         logging.info(analysis_data)
         dists = en_attack_2_all(ratings, auxs, N)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
+        count = 0
         for i in range(len(result)):
             success = result[i][0]
             threshold = result[i][1]
@@ -221,6 +222,9 @@ def statistical_analysis(ratings, auxs, eccen, N):
                 analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'target_index': i}
                 analysis_data.update(sa2dist(dist, ratings, target_record))
                 logging.info(analysis_data)
+                count += 1
+                if count >= 10:
+                    break
     elif eccen and N is None:
         result = de_attack_2_all(ratings, auxs, eccen)
         analysis_data = sa2de_all(result)
