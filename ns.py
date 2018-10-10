@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import os
 import matplotlib.pyplot as plt
+from dist import hellinger_distance, get_prop_dist_global, get_prop_dist_local
 
 method_choices = ['best', 'dist']
 
@@ -130,7 +131,7 @@ def en_attack_2_all(ratings, auxs, N):
     return dists
 
 
-def sa2dist(dist, ratings, target_record):
+def sa2dist(dist, ratings, target_record, **analysis_data):
     items = supp_user(target_record)
     result = [0] * item_size
     for item_id in items:
@@ -143,7 +144,24 @@ def sa2dist(dist, ratings, target_record):
                 down_sum += prop
         if down_sum != 0:
             result[item_id] = up_sum / down_sum
-    return result
+    base_score = score(target_record, target_record, ratings)
+    fitting_score = score(result, target_record, ratings)
+    distance = prop_distantce_of_dist(dist, ratings, target_record)
+    analysis_data.update(
+        {'base_score': base_score, 'fitting_score': fitting_score, 'percent': fitting_score / base_score,
+         'distance': distance})
+    return analysis_data
+
+
+def prop_distantce_of_dist(dist, ratings, target_record):
+    items = supp_user(target_record)
+    local = [i[1] for i in dist]
+    dist_all = 0
+    for item_id in items:
+        glo = get_prop_dist_global(ratings[:, item_id])
+        loc = get_prop_dist_local(ratings[:, item_id], local)
+        dist_all += hellinger_distance(glo, loc)
+    return dist_all / len(items)
 
 
 def get_id_translator(attack_ratings_file_name):
@@ -201,11 +219,8 @@ def statistical_analysis(ratings, auxs, eccen, N):
                     reason = 'no_match'
                 target_record = ratings[i, :]
                 dist = dists[i]
-                fitting_record = sa2dist(dist, ratings, target_record)
-                base_score = score(target_record, target_record, ratings)
-                fitting_score = score(fitting_record, target_record, ratings)
-                analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'base_score': base_score,
-                                 'fitting_score': fitting_score, 'percent': fitting_score / base_score}
+                analysis_data = sa2dist(dist, ratings, target_record,
+                                        **{'failure_reason': reason, 'failure_ts': threshold})
                 logging.info(analysis_data)
     elif eccen and N is None:
         result = de_attack_2_all(ratings, auxs, eccen)
