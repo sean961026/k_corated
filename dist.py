@@ -16,7 +16,10 @@ def get_prop_dist_global(item_record):
     rated_users = supp_item(item_record)
     for user_id in rated_users:
         rating = int(item_record[user_id])
-        p[rating - 1] += 1
+        try:
+            p[rating - 1] += 1
+        except:
+            logging.exception(item_record[user_id])
         s = sum(p)
     return [i / s for i in p]
 
@@ -27,6 +30,9 @@ def get_prop_dist_local(item_record, local):
     for user_id in rated_users:
         if user_id in local:
             rating = int(item_record[user_id])
-            p[rating - 1] += 1
+            try:
+                p[rating - 1] += 1
+            except:
+                logging.exception(item_record[user_id])
     s = sum(p)
     return [i / s for i in p]
