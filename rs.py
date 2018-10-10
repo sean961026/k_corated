@@ -228,9 +228,9 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
         elif ret < 0:
             return 0
         else:
-            return int(ret)
+            return round(ret)
     except:
-        return int(single_user_mean)
+        return round(single_user_mean)
 
 
 def get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size):
