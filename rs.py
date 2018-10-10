@@ -221,9 +221,9 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
             weight_sum += weight_temp
             weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
     if weight_sum != 0:
-        ret = int(single_user_mean + weight_dif_sum / weight_sum) + 1
+        ret = int(single_user_mean + weight_dif_sum / weight_sum)
     else:
-        ret = int(single_user_mean) + 1
+        ret = int(single_user_mean)
     if ret > rate_scale:
         return rate_scale
     elif ret < 0:
