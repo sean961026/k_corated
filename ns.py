@@ -131,7 +131,7 @@ def en_attack_2_all(ratings, auxs, N):
     return dists
 
 
-def sa2dist(dist, ratings, target_record, **analysis_data):
+def sa2dist(dist, ratings, target_record):
     items = supp_user(target_record)
     result = [0] * item_size
     for item_id in items:
@@ -147,9 +147,8 @@ def sa2dist(dist, ratings, target_record, **analysis_data):
     base_score = score(target_record, target_record, ratings)
     fitting_score = score(result, target_record, ratings)
     distance = prop_distantce_of_dist(dist, ratings, target_record)
-    analysis_data.update(
-        {'base_score': base_score, 'fitting_score': fitting_score, 'percent': fitting_score / base_score,
-         'distance': distance})
+    analysis_data = {'base_score': base_score, 'fitting_score': fitting_score, 'percent': fitting_score / base_score,
+                     'distance': distance, 'dist': dist}
     return analysis_data
 
 
@@ -219,8 +218,8 @@ def statistical_analysis(ratings, auxs, eccen, N):
                     reason = 'no_match'
                 target_record = ratings[i, :]
                 dist = dists[i]
-                analysis_data = sa2dist(dist, ratings, target_record,
-                                        **{'failure_reason': reason, 'failure_ts': threshold})
+                analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'target_index': i}
+                analysis_data.update(sa2dist(dist, ratings, target_record))
                 logging.info(analysis_data)
     elif eccen and N is None:
         result = de_attack_2_all(ratings, auxs, eccen)
