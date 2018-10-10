@@ -220,18 +220,16 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
             weight_temp = web[user_id][neighbor_id]
             weight_sum += weight_temp
             weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
-    try:
-        assert weight_sum != 0
-        ret = single_user_mean + weight_dif_sum / weight_sum
-        if ret > rate_scale:
-            return rate_scale
-        elif ret < 0:
-            return 0
-        else:
-            return round(ret)
-    except:
-        return round(single_user_mean)
-
+    if weight_sum != 0:
+        ret = int(single_user_mean + weight_dif_sum / weight_sum) + 1
+    else:
+        ret = int(single_user_mean) + 1
+    if ret > rate_scale:
+        return rate_scale
+    elif ret < 0:
+        return 0
+    else:
+        return ret
 
 def get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size):
     candi_neighbors = supp_item(ratings[:, item_id])
