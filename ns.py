@@ -223,7 +223,7 @@ def statistical_analysis(ratings, auxs, eccen, N):
                 analysis_data.update(sa2dist(dist, ratings, target_record))
                 logging.info(analysis_data)
                 count += 1
-                if count >= 10:
+                if count >= 1:
                     break
     elif eccen and N is None:
         result = de_attack_2_all(ratings, auxs, eccen)
