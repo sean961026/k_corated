@@ -95,7 +95,9 @@ def user_sim(user1, user2, mode):
             return 0
         if len(set(temp_user_2)) == 1 or len(set(temp_user_1)) == 1:
             return 0
-        return np.corrcoef(temp_user_1, temp_user_2)[0, 1]
+        ret = np.corrcoef(temp_user_1, temp_user_2)[0, 1]
+        assert ret <= 1 and ret >= 0
+        return ret
     elif mode == 'adjust':
         pass
     else:
@@ -113,7 +115,9 @@ def user_trust(ratings, id_user1, id_user2, mode):
         for item_id in share_items:
             user1_mean, user2_mean = co_rated_mean(user1, user2)
             temp_sum += 1 - abs(user1_mean + user2[item_id] - user2_mean - user1[item_id]) / rate_scale
-        return temp_sum / len(share_items)
+        ret = temp_sum / len(share_items)
+        assert ret <= 1 and ret >= 0
+        return ret
     elif mode == 'adjust':
         pass
     else:
@@ -145,7 +149,9 @@ def create_trust_web(original_ratings, mode, need_propogate):
             down += items_1_m + items_m_2
         if len(temp_mid) == 0:
             return 0
-        return up / down
+        ret = up / down
+        assert ret <= 1 and ret >= 0
+        return ret
 
     trust_web = np.zeros(shape=(user_size, user_size))
     hundred = 1
@@ -207,16 +213,23 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
     weight_sum = 0
     weight_dif_sum = 0
     single_user_mean = single_mean(user)
+    data = []
     for neighbor_id in neighbor_ids:
         neighbor = ratings[neighbor_id, :]
         if web[user_id][neighbor_id] != 0:
-            neighbor_mean = co_rated_mean(user, neighbor)[1]
+            neighbor_mean = single_mean(neighbor)
             weight_temp = web[user_id][neighbor_id]
             weight_sum += weight_temp
             weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
+            data.append((weight_temp, ratings[neighbor_id, item_id] - neighbor_mean))
     try:
         assert weight_sum != 0
-        return single_user_mean + weight_dif_sum / weight_sum
+        ret = single_user_mean + weight_dif_sum / weight_sum
+        try:
+            assert ret <= rate_scale and ret >= 0
+        except AssertionError:
+            logging.info(data)
+
     except:
         return single_user_mean
 
