@@ -8,7 +8,9 @@ def hellinger_distance(p, q):
     zipped = zip(p, q)
     for pi, qi in zipped:
         s += math.sqrt(pi * qi)
-    return math.sqrt(1 - s)
+    distance = math.sqrt(1 - s)
+    logging.info('p:%s\nq:%s\ndistance:%s', p, q, distance)
+    return distance
 
 
 def get_prop_dist_global(item_record):
