@@ -229,6 +229,7 @@ def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
             assert ret <= rate_scale and ret >= 0
         except AssertionError:
             logging.info(data)
+            return single_user_mean
 
     except:
         return single_user_mean
