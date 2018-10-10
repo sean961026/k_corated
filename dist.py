@@ -1,6 +1,6 @@
 import math
 from rs import supp_item, rate_scale
-
+import logging
 
 def hellinger_distance(p, q):
     s = 0
@@ -15,7 +15,10 @@ def get_prop_dist_global(item_record):
     rated_users = supp_item(item_record)
     for user_id in rated_users:
         rating = int(item_record[user_id])
-        p[rating] += 1
+        try:
+            p[rating] += 1
+        except IndexError:
+            logging.exception(rating)
     s = sum(p)
     return [i / s for i in p]
 

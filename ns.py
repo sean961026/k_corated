@@ -5,6 +5,7 @@ import random
 import numpy as np
 import argparse
 import os
+import sys
 import matplotlib.pyplot as plt
 from dist import hellinger_distance, get_prop_dist_global, get_prop_dist_local
 
@@ -222,6 +223,7 @@ def statistical_analysis(ratings, auxs, eccen, N):
                 analysis_data = sa2dist(dist, ratings, target_record,
                                         **{'failure_reason': reason, 'failure_ts': threshold})
                 logging.info(analysis_data)
+                sys.stdout.flush()
     elif eccen and N is None:
         result = de_attack_2_all(ratings, auxs, eccen)
         analysis_data = sa2de_all(result)
