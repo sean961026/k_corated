@@ -11,10 +11,10 @@ logging.basicConfig(level=logging.INFO,
 np.seterr(all='raise')
 directory = 'ml-100k/'
 min_rating = 1
-max_rating = 5
+max_rating = 21
 rating_scale = max_rating - min_rating
-user_size = 943
-item_size = 1682
+user_size = 63978
+item_size = 150
 mode_choices = ['all', 'distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
 unknown_rating = 0
 unknown_weight = 99
@@ -25,12 +25,12 @@ def get_ratings_from_jester():
     if os.path.exists(filename):
         original_ratings = load(filename)
     else:
-        original_ratings = np.zeros(shape=(2043, 150))
+        original_ratings = np.zeros(shape=(63978, 150))
         with open('jester_dataset_2/jester_ratings.dat', 'r') as file:
             lines = file.readlines()
             for line in lines:
                 user_id, item_id, rating = line.split('\t\t')
-                original_ratings[user_id - 1, item_id - 1] = rating
+                original_ratings[int(user_id) - 1, int(item_id) - 1] = float(rating) + 11
         dump(filename, original_ratings)
     return original_ratings
 
