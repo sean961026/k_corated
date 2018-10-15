@@ -243,15 +243,19 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbors):
         if neighbor_rating != unknown_rating and weight != unknown_weight:
             up += weight * diff
             down += weight
+    des = 'normal'
     try:
         predicted_rating = user_mean + up / down
         if predicted_rating > max_rating:
             predicted_rating = max_rating
+            des = 'over'
         elif predicted_rating < min_rating:
             predicted_rating = min_rating
+            des = 'below'
     except:
         predicted_rating = user_mean
-    return predicted_rating
+        des = 'exception'
+    return predicted_rating, des
 
 
 def main():

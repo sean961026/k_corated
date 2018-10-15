@@ -12,15 +12,17 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     original_ratings = load(dataset + '.base.csv')
     size = test_set.shape[0]
     total = 0
+    count = {'normal': 0, 'over': 0, 'below': 0, 'exception': 0}
     for i in range(size):
         record = test_set[i, :]
         test_user = int(record[0] - 1)
         test_item = int(record[1] - 1)
         test_rating = record[2]
         neighbors = neighbor_fun(test_user, web, neighbor_para)
-        predicted_rating = pd_rating(original_ratings, test_user, test_item, web, neighbors)
+        predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbors)
+        count[des] += 1
         total += (test_rating - predicted_rating) ** 2
-    return math.sqrt(total / size)
+    return math.sqrt(total / size), count
 
 
 def main():
@@ -36,8 +38,8 @@ def main():
     top = args.top
     threshold = args.threshold
     if top and threshold is None:
-        ans = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
-        logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
+        ans, count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
+        logging.info('the RMSE result of %s predicted by %s is %s and %s', data_set, web_name[:-4], ans, count)
     elif threshold and top is None:
         ans = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
         logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
