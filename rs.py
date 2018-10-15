@@ -210,7 +210,7 @@ def create_web(original_ratings, mode, threshold):
         for j in range(user_size):
             user_1 = original_ratings[i, :]
             user_2 = original_ratings[j, :]
-            web[i, j] = weight(user_1, user_2, mode, threshold)
+            web[i, j] = weight(user_1, user_2, mode, threshold) if i != j else 1
     return web
 
 
