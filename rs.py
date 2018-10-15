@@ -250,7 +250,6 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbors):
         elif predicted_rating < min_rating:
             predicted_rating = min_rating
     except:
-        logging.exception('prediction failed')
         predicted_rating = user_mean
     return predicted_rating
 
