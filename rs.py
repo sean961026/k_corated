@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 np.seterr(all='raise')
+directory = 'ml-100k/'
 min_rating = 1
 max_rating = 5
 rating_scale = max_rating - min_rating
@@ -42,7 +43,7 @@ def get_ratings_from_ml_100k(filename):
         original_ratings = load(filename)
     else:
         original_ratings = np.zeros(shape=(user_size, item_size))
-        with open('ml-100k/' + filename[:-4], 'r') as file:
+        with open(directory + filename[:-4], 'r') as file:
             lines = file.readlines()
             for line in lines:
                 user_id, item_id, rating, timestamp = line.split('\t')
@@ -153,7 +154,7 @@ def weight_tanimoto_co(user_1, user_2, threshold):
     norm_1 = np.linalg.norm(u1)
     norm_2 = np.linalg.norm(u2)
     try:
-        w = dot / (norm_1 + norm_2 - dot)
+        w = dot / (norm_1 ** 2 + norm_2 ** 2 - dot)
         if w < 0 or w > 1:
             return unknown_weight
     except:
@@ -181,13 +182,26 @@ def weight_trust_co(user_1, user_2, threshold):
         return w
 
 
-def neareast_neighbors(user_id, web, threshold):
+def neareast_neighbors_by_threshold(user_id, web, threshold):
     weights = web[user_id, :]
     neighbors = []
     for i in range(user_size):
         if weights[i] != unknown_rating and weights[i] > threshold:
             neighbors.append(i)
     return neighbors
+
+
+def nearest_neighbors_by_fix_number(user_id, web, n):
+    weights = web[user_id, :]
+    neighbors = []
+    for i in range(user_size):
+        if weights[i] != unknown_rating:
+            neighbors.append(i)
+    if len(neighbors) < n:
+        return neighbors
+    else:
+        neighbors.sort(reverse=True)
+        return [neighbors[i] for i in range(n)]
 
 
 def create_web(original_ratings, mode, threshold):
@@ -215,9 +229,8 @@ def load(filename):
     return matrix
 
 
-def pd_rating(original_ratings, user_id, item_id, web, neighbor_threshold):
+def pd_rating(original_ratings, user_id, item_id, web, neighbors):
     user = original_ratings[user_id, :]
-    neighbors = neareast_neighbors(user_id, web, neighbor_threshold)
     user_mean = mean(user)
     up = 0
     down = 0
@@ -238,13 +251,13 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbor_threshold):
             predicted_rating = min_rating
     except:
         logging.exception('prediction failed')
-        predicted_rating = unknown_rating
+        predicted_rating = user_mean
     return predicted_rating
 
 
 def main():
     # will create
-    # jester_ratings.csv
+    # [dataset].base.csv
     # [mode]_[threshold].csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
     parser.add_argument('-d', '--dataset', choices=dataset_choices)
