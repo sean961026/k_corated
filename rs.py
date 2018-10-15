@@ -9,13 +9,13 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 np.seterr(all='raise')
-directory = 'ml-100k/'
 min_rating = 1
-max_rating = 21
+max_rating = 5
 rating_scale = max_rating - min_rating
-user_size = 63978
-item_size = 150
+user_size = 943
+item_size = 1682
 mode_choices = ['all', 'distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
+dataset_choices = ['u', 'u1', 'u2', 'u3', 'u4', 'u5']
 unknown_rating = 0
 unknown_weight = 99
 
@@ -25,12 +25,28 @@ def get_ratings_from_jester():
     if os.path.exists(filename):
         original_ratings = load(filename)
     else:
-        original_ratings = np.zeros(shape=(63978, 150))
+        original_ratings = np.zeros(shape=(user_size, item_size))
         with open('jester_dataset_2/jester_ratings.dat', 'r') as file:
             lines = file.readlines()
             for line in lines:
                 user_id, item_id, rating = line.split('\t\t')
                 original_ratings[int(user_id) - 1, int(item_id) - 1] = float(rating) + 11
+        dump(filename, original_ratings)
+    return original_ratings
+
+
+def get_ratings_from_ml_100k(filename):
+    if not filename.endswith('.csv'):
+        filename += '.csv'
+    if os.path.exists(filename):
+        original_ratings = load(filename)
+    else:
+        original_ratings = np.zeros(shape=(user_size, item_size))
+        with open('ml-100k/' + filename[:-4], 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                user_id, item_id, rating, timestamp = line.split('\t')
+                original_ratings[int(user_id) - 1, int(item_id) - 1] = float(rating)
         dump(filename, original_ratings)
     return original_ratings
 
@@ -231,10 +247,12 @@ def main():
     # jester_ratings.csv
     # [mode]_[threshold].csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
+    parser.add_argument('-d', '--dataset', choices=dataset_choices)
     parser.add_argument('-t', '--threshold', type=int)
     parser.add_argument('-m', '--mode', choices=mode_choices)
     args = parser.parse_args()
-    original_ratings = get_ratings_from_jester()
+    dataset = args.dataset
+    original_ratings = get_ratings_from_ml_100k(dataset + '.base')
     mode = args.mode
     co_threshold = args.threshold
     if mode == 'all':
