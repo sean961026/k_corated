@@ -3,282 +3,250 @@ import logging
 import pandas as pd
 import argparse
 import os
+import math
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 np.seterr(all='raise')
 directory = 'ml-100k/'
-rate_scale = 5
+min_rating = 1
+max_rating = 5
+rating_scale = max_rating - min_rating
 user_size = 943
 item_size = 1682
-trust_choices = ['default', 'adjust']
-sim_choices = ['default', 'adjust']
+mode_choices = ['all', 'distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
+unknown_rating = 0
+unknown_weight = 99
 
 
-def get_users(user_file):
-    users = []
-    logging.info('reading users from %s', user_file)
-    with open(user_file, 'r') as file:
-        lines = file.readlines()
-        for line in lines:
-            user_id, age, sex, occupation, zipcode = line.split('|')
-            users.append(
-                {'id': int(user_id), 'age': int(age), 'sex': sex, 'occupation': occupation, 'zipcode': zipcode})
-    return users
-
-
-def get_items(item_file):
-    items = []
-    logging.info('reading items from %s', item_file)
-    with open(item_file, 'r', encoding='ISO-8859-1') as file:
-        lines = file.readlines()
-        for line in lines:
-            movie_id, movie_title, release_date, video_release_date, IMDb_URL = line[:-39].split('|')
-            genres = line[-38:]
-            items.append({'id': int(movie_id), 'title': movie_title, 'release_date': release_date,
-                          'video_release_date': video_release_date, 'IMDb_URL': IMDb_URL, 'genres': genres})
-    return items
-
-
-def get_ratings(rating_file):
-    original_ratings = np.zeros(shape=(user_size, item_size))
-    logging.info('reading ratings from %s', rating_file)
-    with open(rating_file, 'r') as file:
-        lines = file.readlines()
-        for line in lines:
-            user_id, item_id, rating, time_stamp = line.split('\t')
-            original_ratings[int(user_id) - 1][int(item_id) - 1] = rating
+def get_ratings_from_jester():
+    filename = 'jester_ratings.csv'
+    if os.path.exists(filename):
+        original_ratings = load(filename)
+    else:
+        original_ratings = np.zeros(shape=(2043, 150))
+        with open('jester_dataset_2/jester_ratings.dat', 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                user_id, item_id, rating = line.split('\t\t')
+                original_ratings[user_id - 1, item_id - 1] = rating
+        dump(filename, original_ratings)
     return original_ratings
 
 
 def supp_user(user):
+    user = np.array(user) - unknown_rating
     return set(np.nonzero(user)[0])
 
 
 def supp_item(item):
+    item = np.array(item) - unknown_rating
     return set(np.nonzero(item)[0])
 
 
-def co_rated_items(user1, user2):
-    return list(supp_user(user1).intersection(supp_user(user2)))
+def co_rated_items(user_1, user_2):
+    return list(supp_user(user_1).intersection(supp_user(user_2)))
+
+
+def co_rated_part(user_1, user_2):
+    u1 = []
+    u2 = []
+    for i in co_rated_items(user_1, user_2):
+        u1.append(user_1[i])
+        u2.append(user_2[i])
+    return u1, u2
 
 
 def co_bought_users(item1, item2):
     return list(supp_item(item1).intersection(supp_item(item2)))
 
 
-def co_rated_mean(user1, user2):
-    co_items = co_rated_items(user1, user2)
-    sum1 = 0
-    sum2 = 0
-    for item in co_items:
-        sum1 += user1[item]
-        sum2 += user2[item]
-    return sum1 / len(co_items), sum2 / len(co_items)
+def mean(user):
+    rated_items = supp_user(user)
+    s = 0
+    for i in rated_items:
+        s += user[i]
+    return s / len(rated_items)
 
 
-def single_mean(user):
-    items = supp_user(user)
-    sum_u = 0
-    for item in items:
-        sum_u += user[item]
-    return sum_u / len(items)
-
-
-def user_sim(user1, user2, mode):
-    if mode == 'default':
-        share_items = co_rated_items(user1, user2)
-        temp_user_1 = [user1[i] for i in share_items]
-        temp_user_2 = [user2[i] for i in share_items]
-        if len(temp_user_1) == 0:
-            return 0
-        if len(set(temp_user_2)) == 1 or len(set(temp_user_1)) == 1:
-            return 0
-        ret = np.corrcoef(temp_user_1, temp_user_2)[0, 1]
-        assert ret <= 1 and ret >= 0
-        return ret
-    elif mode == 'adjust':
-        pass
+def weight(user_1, user_2, mode, co_threshold):
+    if mode == 'distance_co':
+        w = weight_distance_co(user_1, user_2, co_threshold)
+    elif mode == 'correlation_co':
+        w = weight_correlation_co(user_1, user_2, co_threshold)
+    elif mode == 'cos_co':
+        w = weight_cos_co(user_1, user_2, co_threshold)
+    elif mode == 'tanimoto_co':
+        w = weight_tanimoto_co(user_1, user_2, co_threshold)
+    elif mode == 'trust_co':
+        w = weight_trust_co(user_1, user_2, co_threshold)
     else:
         raise ValueError
+    return w
 
 
-def user_trust(ratings, id_user1, id_user2, mode):
-    if mode == 'default':
-        user1 = ratings[id_user1, :]
-        user2 = ratings[id_user2, :]
-        share_items = co_rated_items(user1, user2)
-        if len(share_items) == 0:
-            return 0
-        temp_sum = 0
-        for item_id in share_items:
-            user1_mean, user2_mean = co_rated_mean(user1, user2)
-            temp_sum += 1 - abs(user1_mean + user2[item_id] - user2_mean - user1[item_id]) / rate_scale
-        ret = temp_sum / len(share_items)
-        assert ret <= 1 and ret >= 0
-        return ret
-    elif mode == 'adjust':
-        pass
+def weight_distance_co(user_1, user_2, threshold):
+    corated = co_rated_items(user_1, user_2)
+    if len(corated) < threshold:
+        return unknown_weight
+    dis = 0
+    for i in corated:
+        dis += (user_1[i] - user_2[i]) ** 2
+    w = 1 / (1 + math.sqrt(dis))
+    if w < 0 or w > 1:
+        return unknown_weight
     else:
-        raise ValueError
+        return w
 
 
-def user_corated(user1, user2):
-    return len(co_rated_items(user1, user2))
+def weight_correlation_co(user_1, user_2, threshold):
+    u1, u2 = co_rated_part(user_1, user_2)
+    if len(u1) < threshold:
+        return unknown_weight
+    try:
+        w = np.corrcoef(u1, u2)[0, 1]
+        if w < 0 or w > 1:
+            return unknown_weight
+    except:
+        w = unknown_weight
+    return w
 
 
-def create_trust_web(original_ratings, mode, need_propogate):
-    def trust_propagation(ratings, id_user1, id_user2, trust_web):
-        temp_mid = set()
-        items_bought_by_user1 = supp_user(ratings[id_user1, :])
-        for item_id in items_bought_by_user1:
-            users_buy_such_item = supp_item(ratings[:, item_id])
-            if id_user2 in users_buy_such_item:
-                for temp_user in users_buy_such_item:
-                    if temp_user != id_user1 and temp_user != id_user2:
-                        temp_mid.add(temp_user)
-        up = 0
-        down = 0
-        for mid in temp_mid:
-            trust_1_m = trust_web[id_user1][mid]
-            trust_m_2 = trust_web[mid][id_user2]
-            items_1_m = len(co_rated_items(id_user1, mid))
-            items_m_2 = len(co_rated_items(mid, id_user2))
-            up += items_1_m * trust_1_m + items_m_2 * trust_m_2
-            down += items_1_m + items_m_2
-        if len(temp_mid) == 0:
-            return 0
-        ret = up / down
-        assert ret <= 1 and ret >= 0
-        return ret
+def weight_cos_co(user_1, user_2, threshold):
+    u1, u2 = co_rated_part(user_1, user_2)
+    if len(u1) < threshold:
+        return unknown_weight
+    dot = np.matmul(u1, u2)
+    norm_1 = np.linalg.norm(u1)
+    norm_2 = np.linalg.norm(u2)
+    try:
+        w = dot / (norm_1 * norm_2)
+        if w < 0 or w > 1:
+            return unknown_weight
+    except:
+        w = unknown_weight
+    return w
 
-    trust_web = np.zeros(shape=(user_size, user_size))
-    hundred = 1
-    logging.info('start to fill trust web')
+
+def weight_tanimoto_co(user_1, user_2, threshold):
+    u1, u2 = co_rated_part(user_1, user_2)
+    if len(u1) < threshold:
+        return unknown_weight
+    dot = np.matmul(u1, u2)
+    norm_1 = np.linalg.norm(u1)
+    norm_2 = np.linalg.norm(u2)
+    try:
+        w = dot / (norm_1 + norm_2 - dot)
+        if w < 0 or w > 1:
+            return unknown_weight
+    except:
+        w = unknown_weight
+    return w
+
+
+def weight_trust_co(user_1, user_2, threshold):
+    u1, u2 = co_rated_part(user_1, user_2)
+    if len(u1) < threshold:
+        return unknown_weight
+    mean_1 = mean(user_1)
+    mean_2 = mean(user_2)
+    z = zip(u1, u2)
+    s = 0
+    for r1, r2 in z:
+        predict_rating = r1 - mean_1 + mean_2
+        difference = predict_rating - r2
+        trust_percent = 1 - abs(difference) / rating_scale
+        s += trust_percent
+    w = s / len(u1)
+    if w < 0 or w > 1:
+        return unknown_weight
+    else:
+        return w
+
+
+def neareast_neighbors(user_id, web, threshold):
+    weights = web[user_id, :]
+    neighbors = []
     for i in range(user_size):
-        if i / 100 == hundred:
-            logging.info('filling trust web, line %s00+', hundred)
-            hundred += 1
-        for j in range(user_size):
-            if i == j:
-                trust_web[i][j] = 1
-            else:
-                trust_web[i][j] = user_trust(original_ratings, i, j, mode)
-    if need_propogate:
-        hundred = 1
-        logging.info('start to trust propagation')
-        for i in range(user_size):
-            if i / 100 == hundred:
-                logging.info('trust propagating, line %s00+', hundred)
-                hundred += 1
-            for j in range(user_size):
-                if trust_web[i][j] == 0:
-                    trust_web[i][j] = trust_propagation(original_ratings, i, j, trust_web)
-    return trust_web
+        if weights[i] != unknown_rating and weights[i] > threshold:
+            neighbors.append(i)
+    return neighbors
 
 
-def create_sim_web(original_ratings, mode):
-    sim_web = np.zeros(shape=(user_size, user_size))
-    hundred = 1
-    logging.info('start to fill sim web')
+def create_web(original_ratings, mode, threshold):
+    web = np.zeros(shape=(user_size, user_size))
     for i in range(user_size):
-        if i / 100 == hundred:
-            logging.info('filling sim web, line %s00+', hundred)
-            hundred += 1
         for j in range(user_size):
-            if i == j:
-                sim_web[i, j] = 1
-            else:
-                sim_web[i, j] = user_sim(original_ratings[i, :], original_ratings[j, :], mode)
-    return sim_web
-
-
-def create_corated_web(original_ratings):
-    corated_web = np.zeros(shape=(user_size, user_size), dtype=int)
-    hundred = 1
-    logging.info('start to fill corated web')
-    for i in range(user_size):
-        if i / 100 == hundred:
-            logging.info('filling corated web, line %s00+', hundred)
-            hundred += 1
-        for j in range(user_size):
-            corated_web[i, j] = user_corated(original_ratings[i, :], original_ratings[j, :])
-    return corated_web
-
-
-def pd_rating(ratings, user_id, item_id, web, nearest_neighbor_size):
-    user = ratings[user_id, :]
-    neighbor_ids = get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size)
-    weight_sum = 0
-    weight_dif_sum = 0
-    single_user_mean = single_mean(user)
-    for neighbor_id in neighbor_ids:
-        neighbor = ratings[neighbor_id, :]
-        if web[user_id][neighbor_id] != 0:
-            neighbor_mean = single_mean(neighbor)
-            weight_temp = web[user_id][neighbor_id]
-            weight_sum += weight_temp
-            weight_dif_sum += weight_temp * (ratings[neighbor_id, item_id] - neighbor_mean)
-    if weight_sum != 0:
-        ret = single_user_mean + weight_dif_sum / weight_sum
-    else:
-        ret = single_user_mean
-    if ret > rate_scale:
-        return rate_scale
-    elif ret < 0:
-        return 0
-    else:
-        return ret
-
-def get_neighbors(ratings, user_id, item_id, web, nearest_neighbor_size):
-    candi_neighbors = supp_item(ratings[:, item_id])
-    candi_pairs = [(web[user_id, candi_neighbor], candi_neighbor) for candi_neighbor in candi_neighbors]
-    candi_pairs.sort(key=lambda x: x[0], reverse=True)
-    if nearest_neighbor_size > len(candi_pairs):
-        return [x[1] for x in candi_pairs]
-    else:
-        return [candi_pairs[i][1] for i in range(nearest_neighbor_size)]
+            user_1 = original_ratings[i, :]
+            user_2 = original_ratings[j, :]
+            web[i, j] = weight(user_1, user_2, mode, threshold)
+    return web
 
 
 def dump(filename, matrix):
-    pd.DataFrame(matrix).to_csv(filename + '.csv', index=False, header=False)
-    logging.info('dump %s to csv', filename)
+    if not filename.endswith('.csv'):
+        filename += '.csv'
+    logging.info('dumping %s', filename)
+    pd.DataFrame(matrix).to_csv(filename, index=False, header=False)
+
+
+def load(filename):
+    if not filename.endswith('.csv'):
+        filename += '.csv'
+    logging.info('loading %s', filename)
+    matrix = np.loadtxt(filename, delimiter=',')
+    return matrix
+
+
+def pd_rating(original_ratings, user_id, item_id, web, neighbor_threshold):
+    user = original_ratings[user_id, :]
+    neighbors = neareast_neighbors(user_id, web, neighbor_threshold)
+    user_mean = mean(user)
+    up = 0
+    down = 0
+    for neighbor_id in neighbors:
+        neighbor = original_ratings[neighbor_id, :]
+        neighbor_mean = mean(neighbor)
+        neighbor_rating = neighbor[item_id]
+        diff = neighbor_rating - neighbor_mean
+        weight = web[user_id, neighbor_id]
+        if neighbor_rating != unknown_rating and weight != unknown_weight:
+            up += weight * diff
+            down += weight
+    try:
+        predicted_rating = user_mean + up / down
+        if predicted_rating > max_rating:
+            predicted_rating = max_rating
+        elif predicted_rating < min_rating:
+            predicted_rating = min_rating
+    except:
+        logging.exception('prediction failed')
+        predicted_rating = unknown_rating
+    return predicted_rating
 
 
 def main():
     # will create
-    # [data_set]_ratings.csv
-    # [data_set]_corated_web.csv
-    # [data_set]_[trust_mode]_trust_prop_web.csv
-    # [data_set]_[trust_mode]_trust_web.csv
-    # [data_set]_[sim_mode]_sim_web.csv
+    # jester_ratings.csv
+    # [mode]_[threshold].csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
-    parser.add_argument('-d', '--dataset', required=True)
-    parser.add_argument('-t', '--trust', choices=trust_choices)
-    parser.add_argument('-s', '--sim', choices=sim_choices)
+    parser.add_argument('-t', '--threshold', type=int)
+    parser.add_argument('-m', '--mode', choices=mode_choices)
     args = parser.parse_args()
-    data_set = args.dataset
-    trust_mode = args.trust
-    sim_mode = args.sim
-    rating_file = directory + data_set + '.base'
-
-    if not os.path.exists(data_set + '_ratings.csv'):
-        original_ratings = get_ratings(rating_file)
-        dump(data_set + '_ratings', original_ratings)
+    original_ratings = get_ratings_from_jester()
+    mode = args.mode
+    co_threshold = args.threshold
+    if mode == 'all':
+        for mode in mode_choices:
+            if mode != 'all':
+                web = create_web(original_ratings, mode, co_threshold)
+                filename = mode + '_' + str(co_threshold)
+                dump(filename, web)
     else:
-        original_ratings = np.loadtxt(data_set + '_ratings.csv', delimiter=',')
-    if not os.path.exists(data_set + '_corated_web.csv'):
-        corated_web = create_corated_web(original_ratings)
-        dump(data_set + '_corated_web', corated_web)
-    if trust_mode:
-        trust_web = create_trust_web(original_ratings, trust_mode, True)
-        dump(data_set + '_' + trust_mode + '_' + 'trust_prop_web', trust_web)
-        trust_web = create_trust_web(original_ratings, trust_mode, False)
-        dump(data_set + '_' + trust_mode + '_' + 'trust_web', trust_web)
-    if sim_mode:
-        sim_web = create_sim_web(original_ratings, sim_mode)
-        dump(data_set + '_' + sim_mode + '_' + 'sim_web', sim_web)
+        web = create_web(original_ratings, mode, co_threshold)
+        filename = mode + '_' + str(co_threshold)
+        dump(filename, web)
 
 
 if __name__ == '__main__':
