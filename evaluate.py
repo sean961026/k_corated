@@ -7,6 +7,7 @@ import logging
 
 original_ratings = None
 
+
 def RMSE(dataset, web, neighbor_fun, neighbor_para):
     test_set = np.loadtxt(directory + dataset + '.test', delimiter='\t')
     size = test_set.shape[0]
@@ -27,6 +28,11 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     return count
 
 
+def init(data_set):
+    global original_ratings
+    original_ratings = load(get_ratings_name_from_dataset(data_set))
+
+
 def main():
     parser = argparse.ArgumentParser(description='RMSE test for a certain dataset')
     parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
@@ -40,8 +46,8 @@ def main():
     top = args.top
     threshold = args.threshold
     suffix = args.suffix
-    global original_ratings
-    original_ratings = load(get_ratings_name_from_dataset(data_set))
+    init(data_set)
+
     def rmse(webname):
         web = load(webname)
         if top and threshold is None:
