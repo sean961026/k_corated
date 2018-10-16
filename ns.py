@@ -102,7 +102,7 @@ def generate_aux(user_id, total, correct):
 
 def generate_auxs(total, correct):
     logging.info('generating auxs from ratings')
-    auxs = [0] * len(original_ratings.shape[0])
+    auxs = [0] * original_ratings.shape[0]
     for i in range(original_ratings.shape[0]):
         aux = generate_aux(i, total, correct)
         auxs[o2k(i)] = aux
