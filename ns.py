@@ -1,4 +1,4 @@
-from rs import rate_scale, user_size, supp_item, supp_user, item_size
+from rs import rating_scale, supp_item, supp_user, load
 import logging
 import math
 import random
@@ -6,39 +6,55 @@ import numpy as np
 import argparse
 import os
 import matplotlib.pyplot as plt
-from dist import hellinger_distance, get_prop_dist_global, get_prop_dist_local
 
 method_choices = ['best', 'dist']
+sim_threshold = 0
+sim_mode = ''
+attack_ratings = None
+original_ratings = None
+user_size = 0
+item_size = 0
+translator = []
+o2k = lambda x: translator.index(x)
 
 
-def sim_rate(rate1, rate2):
-    return math.exp(-abs(rate1 - rate2) / rate_scale)
+def get_id_translator(attack_ratings_file_name):
+    index_file = attack_ratings_file_name[:-4] + '_index.csv'
+    if not os.path.exists(index_file):
+        return [i for i in range(user_size)]
+    index = np.loadtxt(index_file)
+    index_data = [int(i) - 1 for i in index]
+    return index_data
 
 
-def score(aux, record, ratings):
-    item_ids = list(np.nonzero(aux)[0])
+def sim_rate(rate1, rate2, mode):
+    if mode == 'exp':
+        return math.exp(-abs(rate1 - rate2) / rating_scale)
+    elif mode == 'indicate':
+        return 1 if abs(rate1 - rate2) < sim_threshold else 0
+    else:
+        raise ValueError
+
+
+def item_weight(item_id):
+    return 1 / len(supp_item(attack_ratings[:, item_id]))
+
+
+def score(aux, record):
+    item_ids = supp_user(aux)
     sum = 0
     for item_id in item_ids:
-        weight = 1 / len(supp_item(ratings[:, item_id]))
-        sum += weight * sim_rate(aux[item_id], record[item_id])
+        weight = item_weight(item_id)
+        sum += weight * sim_rate(aux[item_id], record[item_id], sim_mode)
     return sum
 
 
-def get_scores(aux, ratings):
+def get_scores(aux):
     scores = []
     for i in range(user_size):
-        record = ratings[i, :]
-        scores.append(score(aux, record, ratings))
+        record = attack_ratings[i, :]
+        scores.append(score(aux, record))
     return scores
-
-
-def generate_auxs(ratings, total, correct):
-    logging.info('generating auxs from ratings')
-    auxs = []
-    for i in range(ratings.shape[0]):
-        aux = generate_aux(ratings, i, total, correct)
-        auxs.append(aux)
-    return auxs
 
 
 def analyze_scores(scores):
@@ -49,6 +65,47 @@ def analyze_scores(scores):
     max2 = max(temp)
     threshold = (max1 - max2) / std
     return {'max1': max1, 'max2': max2, 'std': std, 'threshold': threshold}
+
+
+def generate_aux(user_id, total, correct):
+    def random_wrong(start, end, right_value, tp):
+        if tp == int:
+            while True:
+                r = random.randint(start, end)
+                if r != right_value:
+                    return r
+        elif tp == float:
+            while True:
+                r = random.uniform(start, end)
+                if r != right_value:
+                    return r
+
+    user = original_ratings[user_id, :]
+    items = list(supp_user(user))
+    if total < len(items):
+        total_list = random.sample(items, total)
+    else:
+        total_list = items
+    if correct < len(total_list):
+        correct_list = random.sample(total_list, correct)
+    else:
+        correct_list = total_list
+    aux = [0] * item_size
+    for i in total_list:
+        if i in correct_list:
+            aux[i] = user[i]
+        else:
+            aux[i] = random_wrong(1, 5, user[i], int)
+    return aux
+
+
+def generate_auxs(total, correct):
+    logging.info('generating auxs from ratings')
+    auxs = [0] * len(original_ratings.shape[0])
+    for i in range(original_ratings.shape[0]):
+        aux = generate_aux(i, total, correct)
+        auxs[o2k(i)] = aux
+    return auxs
 
 
 def de_anonymization(scores, eccen):
@@ -62,7 +119,8 @@ def de_anonymization(scores, eccen):
 
 
 def entropic_de(scores):
-    std = np.std(scores)
+    data = analyze_scores(scores)
+    std = data['std']
     temp = [math.exp(i / std) for i in scores]
     total = sum(temp)
     c = 1 / total
@@ -76,100 +134,57 @@ def top_N_from_en(scores, N):
     return [dist[i] for i in range(N)]
 
 
-def generate_aux(original_ratings, user_id, total, correct):
-    user = original_ratings[user_id, :]
-    items = list(supp_user(user))
-    if total < len(items):
-        total_list = random.sample(items, total)
-    else:
-        logging.debug('cannot sample,size is %s', len(items))
-        total_list = items
-    if correct < len(total_list):
-        correct_list = random.sample(total_list, correct)
-    else:
-        correct_list = total_list
-    aux = [0] * item_size
-    for i in total_list:
-        if i in correct_list:
-            aux[i] = user[i]
-        else:
-            all_ratings = set([i + 1 for i in range(rate_scale)])
-            avail_ratings = list(all_ratings - {user[i]})
-            avail_ratings.sort()
-            aux[i] = avail_ratings[random.randint(0, 3)]
-    return np.array(aux)
-
-
-def de_attack_2_all(ratings, auxs, eccen):
+def de_attack_2_range(auxs, eccen, rg=range(user_size)):
     logging.info('attacking the ratings by best guess')
-    record_size = ratings.shape[0]
     result = []
-    for i in range(record_size):
+    for i in rg:
         aux = auxs[i]
-        scores = get_scores(aux, ratings)
+        scores = get_scores(aux)
         ans = de_anonymization(scores, eccen)
         threshold = analyze_scores(scores)['threshold']
         if ans is None:
-            result.append((None, threshold))
+            result.append(('no_match', threshold))
         else:
             if ans == i:
-                result.append((1, threshold))
+                result.append(('match_success', threshold))
             else:
-                result.append((0, threshold))
+                result.append(('match_failure', threshold))
     return result
 
 
-def en_attack_2_all(ratings, auxs, N):
+def en_attack_2_range(auxs, N, rg=range(user_size)):
     logging.info('attacking the ratings by distribution')
     dists = []
-    record_size = ratings.shape[0]
-    for i in range(record_size):
+    for i in rg:
         aux = auxs[i]
-        scores = get_scores(aux, ratings)
+        scores = get_scores(aux)
         dist = top_N_from_en(scores, N)
         dists.append(dist)
     return dists
 
 
-def sa2dist(dist, ratings, target_record):
-    items = supp_user(target_record)
-    result = [0] * item_size
-    for item_id in items:
-        up_sum = 0
-        down_sum = 0
-        for prop, index in dist:
-            record = ratings[index, :]
-            if record[item_id] != 0:
-                up_sum += prop * record[item_id]
-                down_sum += prop
-        if down_sum != 0:
-            result[item_id] = up_sum / down_sum
-    base_score = score(target_record, target_record, ratings)
-    fitting_score = score(result, target_record, ratings)
-    distance = prop_distantce_of_dist(dist, ratings, target_record)
-    analysis_data = {'base_score': base_score, 'fitting_score': fitting_score, 'percent': fitting_score / base_score,
-                     'distance': distance, 'dist': dist}
+def sa2dist(dist):
+    dist.sort(key=lambda x: x[0], reverse=True)
+
+    def percent2size(percent):
+        up_limit = len(dist)
+        while up_limit > 0:
+            temp = [dist[i][0] for i in range(up_limit)]
+            s2 = sum(temp)
+            s1 = s2 - temp.pop()
+            if s1 < percent and s2 >= percent:
+                return len(temp)
+            else:
+                up_limit -= 1
+        return 0
+
+    def size2propsum(size):
+        temp = [dist[i][0] for i in range(size)]
+        return sum(temp)
+
+    analysis_data = {'max_pro': dist[0][0], '90p': percent2size(0.9), '95p': percent2size(0.95),
+                     'top10': size2propsum(10), 'top20': size2propsum(20)}
     return analysis_data
-
-
-def prop_distantce_of_dist(dist, ratings, target_record):
-    items = supp_user(target_record)
-    local = [i[1] for i in dist]
-    dist_all = 0
-    for item_id in items:
-        glo = get_prop_dist_global(ratings[:, item_id])
-        loc = get_prop_dist_local(ratings[:, item_id], local)
-        dist_all += hellinger_distance(glo, loc)
-    return dist_all / len(items)
-
-
-def get_id_translator(attack_ratings_file_name):
-    index_file = attack_ratings_file_name[:-4] + '_index.csv'
-    if not os.path.exists(index_file):
-        return [i for i in range(user_size)]
-    index = np.loadtxt(index_file)
-    index_data = [int(i) - 1 for i in index]
-    return index_data
 
 
 def sa2de_all(result):
@@ -181,10 +196,10 @@ def sa2de_all(result):
     for i in range(len(result)):
         threshold = result[i][1]
         thresholds.append(threshold)
-        if result[i][0] == None:
+        if result[i][0] == 'no_match':
             no_match_list.append(i)
         else:
-            if result[i][0] == 0:
+            if result[i][0] == 'match_failure':
                 wrong_match_list.append(i)
             else:
                 success_list.append(i)
@@ -194,41 +209,36 @@ def sa2de_all(result):
     bins = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
     plt.hist(thresholds, bins=bins)
     plt.savefig('threshold.jpg')
-    max_no_match_ts = result[max(no_match_list, key=lambda x: result[x][1])][1] if no_match_list else None
-    min_sucess_ts = result[min(success_list, key=lambda x: result[x][1])][1] if success_list else None
-    return {'min_sucess_ts': min_sucess_ts, 'max_no_match_ts': max_no_match_ts,
-            'success_rate': len(success_list) / len(result), 'no_match_rate': len(no_match_list) / len(result),
-            'wrong_match_rate': len(wrong_match_list) / len(result), 'attack_size': len(result)}
+    return {'success_rate': len(success_list) / len(result), 'no_match_rate': len(no_match_list) / len(result),
+            'wrong_match_rate': len(wrong_match_list) / len(result),
+            'attack_size': len(result)}, no_match_list, success_list, wrong_match_list
 
 
-def statistical_analysis(ratings, auxs, eccen, N):
+def statistical_analysis(auxs, eccen, N):
     if eccen and N:
-        result = de_attack_2_all(ratings, auxs, eccen)
-        analysis_data = sa2de_all(result)
+        result = de_attack_2_range(auxs, eccen)
+        analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
         logging.info(analysis_data)
-        dists = en_attack_2_all(ratings, auxs, N)
+        dists = en_attack_2_range(auxs, N, rg=no_match_list + wrong_match_list)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
-        count = 0
-        for i in range(len(result)):
-            success = result[i][0]
-            threshold = result[i][1]
-            if success != 1:
-                if success == 0:
-                    reason = 'wrong_match'
-                else:
-                    reason = 'no_match'
-                target_record = ratings[i, :]
-                dist = dists[i]
-                analysis_data = {'failure_reason': reason, 'failure_ts': threshold, 'target_index': i}
-                analysis_data.update(sa2dist(dist, ratings, target_record))
-                logging.info(analysis_data)
-                count += 1
-                if count >= 1:
-                    break
+        for dist in dists:
+            analysis_data = sa2dist(dist)
+            logging.info(analysis_data)
     elif eccen and N is None:
-        result = de_attack_2_all(ratings, auxs, eccen)
+        result = de_attack_2_range(auxs, eccen)
         analysis_data = sa2de_all(result)
         logging.info(analysis_data)
+
+
+def init(_sim_threshold, _sim_mode, attack_ratings_file):
+    global sim_threshold, sim_mode, attack_ratings, original_ratings, translator, user_size, item_size
+    sim_threshold = _sim_threshold
+    sim_mode = _sim_mode
+    attack_ratings = load(attack_ratings_file)
+    original_ratings = attack_ratings_file
+    translator = get_id_translator(attack_ratings_file)
+    user_size = original_ratings.shape[0]
+    item_size = original_ratings.shape[1]
 
 
 def main():
@@ -239,26 +249,6 @@ def main():
     parser.add_argument('-e', '--eccen', type=float)
     parser.add_argument('-n', type=int)
     args = parser.parse_args()
-    ratings_to_attack = np.loadtxt(args.ratings, delimiter=',')
-    dataset_list = ['u1', 'u2', 'u3', 'u4', 'u5']
-    for dataset in dataset_list:
-        if dataset in args.ratings:
-            break
-    else:
-        logging.info('illegal ratings file')
-        return
-    ratings_to_gen_aux = np.loadtxt(dataset + '_ratings.csv', delimiter=',')
-    total = args.total
-    correct = args.correct
-    eccen = args.eccen
-    N = args.n
-    temp_auxs = generate_auxs(ratings_to_gen_aux, total, correct)
-    translator = get_id_translator(args.ratings)
-    auxs = [0] * len(temp_auxs)
-    for i in range(len(temp_auxs)):
-        index_in_attack = translator.index(i)
-        auxs[index_in_attack] = temp_auxs[i]
-    statistical_analysis(ratings_to_attack, auxs, eccen, N)
 
 
 if __name__ == '__main__':

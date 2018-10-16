@@ -12,38 +12,23 @@ np.seterr(all='raise')
 directory = 'ml-100k/'
 min_rating = 1
 max_rating = 5
-rating_scale = max_rating - min_rating
+rating_scale = max_rating - min_rating + 1
 user_size = 943
 item_size = 1682
-mode_choices = ['all', 'distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
-dataset_choices = ['u', 'u1', 'u2', 'u3', 'u4', 'u5']
+mode_branches = ['distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
+mode_choices = ['all'] + mode_branches
+dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
 unknown_rating = 0
 unknown_weight = 99
 
 
-def get_ratings_from_jester():
-    filename = 'jester_ratings.csv'
+def get_ratings_from_ml_100k(dataset):
+    filename = 'ratings_' + dataset + '.csv'
     if os.path.exists(filename):
         original_ratings = load(filename)
     else:
         original_ratings = np.zeros(shape=(user_size, item_size))
-        with open('jester_dataset_2/jester_ratings.dat', 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                user_id, item_id, rating = line.split('\t\t')
-                original_ratings[int(user_id) - 1, int(item_id) - 1] = float(rating) + 11
-        dump(filename, original_ratings)
-    return original_ratings
-
-
-def get_ratings_from_ml_100k(filename):
-    if not filename.endswith('.csv'):
-        filename += '.csv'
-    if os.path.exists(filename):
-        original_ratings = load(filename)
-    else:
-        original_ratings = np.zeros(shape=(user_size, item_size))
-        with open(directory + filename[:-4], 'r') as file:
+        with open(directory + dataset + '.base', 'r') as file:
             lines = file.readlines()
             for line in lines:
                 user_id, item_id, rating, timestamp = line.split('\t')
@@ -173,7 +158,7 @@ def weight_trust_co(user_1, user_2, threshold):
     for r1, r2 in z:
         predict_rating = r1 - mean_1 + mean_2
         difference = predict_rating - r2
-        trust_percent = 1 - abs(difference) / rating_scale
+        trust_percent = 1 - abs(difference) / (max_rating - min_rating)
         s += trust_percent
     w = s / len(u1)
     if w < 0 or w > 1:
@@ -258,28 +243,42 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbors):
     return predicted_rating, des
 
 
+def get_all_web_files(suffix=None):
+    web_files = []
+    if suffix:
+        for file in os.listdir('.'):
+            if file.startswith('web') and file.endswith(suffix):
+                web_files.append(file)
+                break
+    else:
+        for file in os.listdir('.'):
+            if file.startswith('web'):
+                web_files.append(file)
+                break
+    return web_files
+
+
 def main():
     # will create
-    # [dataset].base.csv
-    # [mode]_[threshold].csv
+    # ratings_[dataset].csv
+    # web_[mode]_[threshold].csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
     parser.add_argument('-d', '--dataset', choices=dataset_choices)
     parser.add_argument('-t', '--threshold', type=int)
     parser.add_argument('-m', '--mode', choices=mode_choices)
     args = parser.parse_args()
     dataset = args.dataset
-    original_ratings = get_ratings_from_ml_100k(dataset + '.base')
+    original_ratings = get_ratings_from_ml_100k(dataset)
     mode = args.mode
     co_threshold = args.threshold
     if mode == 'all':
-        for mode in mode_choices:
-            if mode != 'all':
-                web = create_web(original_ratings, mode, co_threshold)
-                filename = mode + '_' + str(co_threshold)
-                dump(filename, web)
+        for mode in mode_branches:
+            web = create_web(original_ratings, mode, co_threshold)
+            filename = 'web_' + mode + '_' + str(co_threshold)
+            dump(filename, web)
     else:
         web = create_web(original_ratings, mode, co_threshold)
-        filename = mode + '_' + str(co_threshold)
+        filename = 'web_' + mode + '_' + str(co_threshold)
         dump(filename, web)
 
 
