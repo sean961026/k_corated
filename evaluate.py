@@ -1,5 +1,5 @@
 from rs import pd_rating, load, directory, neareast_neighbors_by_threshold, nearest_neighbors_by_fix_number, \
-    mode_choices
+    mode_choices, supp_item
 import numpy as np
 import math
 import argparse
@@ -21,7 +21,8 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         test_user = int(record[0] - 1)
         test_item = int(record[1] - 1)
         test_rating = record[2]
-        neighbors = neighbor_fun(test_user, web, neighbor_para)
+        candidates = supp_item(original_ratings[:, test_item])
+        neighbors = neighbor_fun(candidates, test_user, web, neighbor_para)
         predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbors)
         count[des][abs(int(predicted_rating - test_rating))] += 1
         total += (test_rating - predicted_rating) ** 2

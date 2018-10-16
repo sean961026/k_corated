@@ -182,19 +182,19 @@ def weight_trust_co(user_1, user_2, threshold):
         return w
 
 
-def neareast_neighbors_by_threshold(user_id, web, threshold):
+def neareast_neighbors_by_threshold(candidates, user_id, web, threshold):
     weights = web[user_id, :]
     neighbors = []
-    for i in range(user_size):
+    for i in candidates:
         if weights[i] != unknown_weight and weights[i] > threshold and i != user_id:
             neighbors.append(i)
     return neighbors
 
 
-def nearest_neighbors_by_fix_number(user_id, web, n):
+def nearest_neighbors_by_fix_number(candidates, user_id, web, n):
     weights = web[user_id, :]
     neighbors = []
-    for i in range(user_size):
+    for i in candidates:
         if weights[i] != unknown_weight and i != user_id:
             neighbors.append(i)
     if len(neighbors) < n:
