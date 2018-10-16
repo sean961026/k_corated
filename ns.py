@@ -135,7 +135,7 @@ def top_N_from_en(scores, N):
     return [dist[i] for i in range(N)]
 
 
-def de_attack_2_range(auxs, eccen, rg=range(user_size)):
+def de_attack_2_range(auxs, eccen, rg):
     logging.info('attacking the ratings by best guess')
     result = []
     for i in rg:
@@ -153,7 +153,7 @@ def de_attack_2_range(auxs, eccen, rg=range(user_size)):
     return result
 
 
-def en_attack_2_range(auxs, N, rg=range(user_size)):
+def en_attack_2_range(auxs, N, rg):
     logging.info('attacking the ratings by distribution')
     dists = []
     for i in rg:
@@ -217,7 +217,7 @@ def sa2de_all(result):
 
 def statistical_analysis(auxs, eccen, N):
     if eccen and N:
-        result = de_attack_2_range(auxs, eccen)
+        result = de_attack_2_range(auxs, eccen, rg=range(user_size))
         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
         logging.info(analysis_data)
         dists = en_attack_2_range(auxs, N, rg=no_match_list + wrong_match_list)
@@ -226,7 +226,7 @@ def statistical_analysis(auxs, eccen, N):
             analysis_data = sa2dist(dist)
             logging.info(analysis_data)
     elif eccen and N is None:
-        result = de_attack_2_range(auxs, eccen)
+        result = de_attack_2_range(auxs, eccen, rg=range(user_size))
         analysis_data = sa2de_all(result)
         logging.info(analysis_data)
 
@@ -241,7 +241,6 @@ def init(_sim_threshold, _sim_mode, attack_ratings_file):
     translator = get_id_translator(attack_ratings_file)
     user_size = original_ratings.shape[0]
     item_size = original_ratings.shape[1]
-    logging.info('user_size:%s,item_size:%s', user_size, item_size)
 
 
 def main():
@@ -257,7 +256,6 @@ def main():
     init(args.threshold, args.mode, args.ratings)
     auxs = generate_auxs(args.total, args.correct)
     statistical_analysis(auxs, args.eccen, args.n)
-
 
 
 if __name__ == '__main__':
