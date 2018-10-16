@@ -9,7 +9,7 @@ original_ratings = None
 sorted_ratings = None
 neighbor_fun = None
 neighbor_para = None
-
+web = None
 
 def set_cmp(user1, user2):
     items_1 = supp_user(user1)
@@ -56,7 +56,8 @@ def k_corating_slice(sorted_ratings, myslice):  # [start,end)
     for item_id in items_need_to_rate:
         for record in part_ratings:
             if record[item_id] == unknown_rating:
-                record[item_id] = round(pd_rating(original_ratings, record[-1], item_id, neighbor_fun, neighbor_para))
+                record[item_id] = round(
+                    pd_rating(original_ratings, record[-1], item_id, web, neighbor_fun, neighbor_para))
 
 
 def k_corating_all(sorted_ratings, k):
@@ -126,6 +127,8 @@ def main():
     init(data_set, threshold, top)
 
     def k_corated(webname):
+        global web
+        web = load(webname)
         k_corated, index_translator = k_corating_all(sorted_ratings.copy(), k)
         k_file_name = get_k_corated_name_by_atrr(data_set, k, webname, threshold, top)
         index_file_name = get_k_corated_index_by_att(data_set, k, webname, threshold, top)
