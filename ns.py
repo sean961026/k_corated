@@ -241,6 +241,7 @@ def init(_sim_threshold, _sim_mode, attack_ratings_file):
     translator = get_id_translator(attack_ratings_file)
     user_size = original_ratings.shape[0]
     item_size = original_ratings.shape[1]
+    logging.info('user_size:%s,item_size:%s', user_size, item_size)
 
 
 def main():
