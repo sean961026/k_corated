@@ -214,11 +214,13 @@ def load(filename):
     return matrix
 
 
-def pd_rating(original_ratings, user_id, item_id, web, neighbors):
+def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_para):
     user = original_ratings[user_id, :]
     user_mean = mean(user)
     up = 0
     down = 0
+    candidates = supp_item(original_ratings[:, item_id])
+    neighbors = neighbor_fun(candidates, user_id, item_id, web, neighbor_para)
     for neighbor_id in neighbors:
         neighbor = original_ratings[neighbor_id, :]
         neighbor_mean = mean(neighbor)

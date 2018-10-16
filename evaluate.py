@@ -19,9 +19,7 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         test_user = int(record[0] - 1)
         test_item = int(record[1] - 1)
         test_rating = record[2]
-        candidates = supp_item(original_ratings[:, test_item])
-        neighbors = neighbor_fun(candidates, test_user, web, neighbor_para)
-        predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbors)
+        predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbor_fun, neighbor_para)
         count[des][abs(int(predicted_rating - test_rating))] += 1
         total += (test_rating - predicted_rating) ** 2
     count['RMSE'] = math.sqrt(total / size)

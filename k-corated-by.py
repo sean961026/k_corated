@@ -1,8 +1,14 @@
-from rs import supp_user, user_size, item_size, pd_rating, dump
+from rs import supp_user, pd_rating, dump, load, unknown_rating, nearest_neighbors_by_fix_number, \
+    neareast_neighbors_by_threshold, dataset_choices, get_ratings_name_from_dataset, get_all_web_files
 from functools import cmp_to_key
 import numpy as np
 import logging
 import argparse
+
+original_ratings = None
+sorted_ratings = None
+neighbor_fun = None
+neighbor_para = None
 
 
 def set_cmp(user1, user2):
@@ -30,6 +36,8 @@ def mycmp(user1, user2):
 
 
 def sort(ratings):
+    user_size = ratings.shape[0]
+    item_size = ratings.shape[1]
     ratings = np.insert(ratings, item_size, [i + 1 for i in range(user_size)], 1)
     temp = [ratings[i, :] for i in range(user_size)]
     temp.sort(key=cmp_to_key(mycmp))
@@ -39,116 +47,97 @@ def sort(ratings):
     return ret
 
 
-def part_k_corated(ratings, k):
-    candi = []
-    temp = {}
-    for i in range(user_size):
-        size = len(supp_user(ratings[i, :]))
-        if size not in temp.keys():
-            temp[size] = [i, i]
-        else:
-            temp[size][1] = i
-    for value in temp.values():
-        if value[1] - value[0] + 1 < k:
-            continue
-        else:
-            while value[1] - value[0] + 1 >= k:
-                right = are_corated(ratings, value[0], value[0] + k - 1)
-                if not right[0]:
-                    value[0] = right[1]
-                else:
-                    j = right[1]
-                    while j <= value[1]:
-                        if is_corated(ratings[value[0], :], ratings[j, :]):
-                            j += 1
-                        else:
-                            break
-                    candi.extend([i for i in range(value[0], j)])
-                    value[0] = j
-    if candi:
-        return ratings[candi].copy(), np.delete(ratings, candi, 0)
-    else:
-        return None, ratings.copy()
+def k_corating_slice(sorted_ratings, myslice):  # [start,end)
+    logging.info('k corating slice(%s,%s)', myslice.start, myslice.stop)
+    part_ratings = sorted_ratings[myslice, :]
+    items_need_to_rate = set()
+    for record in part_ratings:
+        items_need_to_rate = items_need_to_rate.union(supp_user(record))
+    for item_id in items_need_to_rate:
+        for record in part_ratings:
+            if record[item_id] == unknown_rating:
+                record[item_id] = round(pd_rating(original_ratings, record[-1], item_id, neighbor_fun, neighbor_para))
 
 
-def is_corated(user1, user2):
-    if supp_user(user1) == supp_user(user2):
-        return True
-    return False
-
-
-def are_corated(ratings, start, end):
-    for i in range(start, end):
-        if not is_corated(ratings[i, :], ratings[i + 1, :]):
-            return False, i + 1
-    return True, end + 1
-
-
-def k_corating(k, non_k_matrix, original_ratings, web, nearest_neighbors_size):
-    remain = non_k_matrix.shape[0]
+def k_corating_all(sorted_ratings, k):
     start = 0
-    while remain > 0:
-        if remain >= k:
-            temp_range = [start, start + k]
-            while temp_range[1] < non_k_matrix.shape[0]:
-                if is_corated(non_k_matrix[temp_range[1] - 1, :], non_k_matrix[temp_range[1], :]):
-                    temp_range[1] += 1
-                else:
-                    break
-            if non_k_matrix.shape[0] - temp_range[1] < k:
-                temp_range[1] = non_k_matrix.shape[0]
-        else:
-            temp_range = [start, non_k_matrix.shape[0]]
-        logging.info('trying to fill lines in [%s,%s]', temp_range[0], temp_range[1] - 1)
-        items_need_to_rate = set()
-        for i in range(temp_range[0], temp_range[1]):
-            items_need_to_rate = items_need_to_rate.union(supp_user(non_k_matrix[i, :]))
-        items_need_to_rate = list(items_need_to_rate)
-        for item_id in items_need_to_rate:
-            for i in range(temp_range[0], temp_range[1]):
-                if non_k_matrix[i][item_id] == 0:
-                    non_k_matrix[i][item_id] = pd_rating(original_ratings, int(non_k_matrix[i][-1]) - 1, item_id,
-                                                         web, nearest_neighbors_size)
-        start = temp_range[1]
-        remain -= temp_range[1] - temp_range[0]
+    while sorted_ratings.shape[0] - start >= k:
+        myslice = slice(start, start + k)
+        k_corating_slice(sorted_ratings, myslice)
+        start += k
+    myslice = slice(start, sorted_ratings.shape[0])
+    k_corating_slice(sorted_ratings, myslice)
+    index_translator = sorted_ratings[:, -1]
+    k_corated = np.delete(sorted_ratings, sorted_ratings.shape[1] - 1, 1)
+    return k_corated, index_translator
 
 
-def k_corate(k, ratings_name, web_name, nearest_neighbor_size):
-    ratings = np.loadtxt(ratings_name, delimiter=',')
-    web = np.loadtxt(web_name, delimiter=',')
-    logging.info('sorting the ratings:%s', ratings_name)
-    sorted_ratings = sort(ratings)
-    logging.info('dividing the sorted ratings from %s', ratings_name)
-    k_coreted_part, non_k_corated_part = part_k_corated(sorted_ratings, k)
-    logging.info('%s corating the non-%s-corated part by web:%s from %s nearest neighbors', k, k, web_name,
-                 nearest_neighbor_size)
-    k_corating(k, non_k_corated_part, ratings, web, nearest_neighbor_size)
-    logging.info('combing two parts into one')
-    if k_coreted_part is not None:
-        ret = np.insert(k_coreted_part, k_coreted_part.shape[0], non_k_corated_part, 0)
+def init(dataset, threshold, top):
+    global original_ratings, neighbor_fun, neighbor_para, sorted_ratings
+    original_ratings = load(get_ratings_name_from_dataset(dataset))
+    sorted_ratings = sort(original_ratings)
+    if threshold and top is None:
+        neighbor_fun = neareast_neighbors_by_threshold
+        neighbor_para = threshold
+    elif top and threshold is None:
+        neighbor_fun = nearest_neighbors_by_fix_number
+        neighbor_para = top
     else:
-        ret = non_k_corated_part
-    index_trans = ret[:, -1]
-    ret = np.delete(ret, ret.shape[1] - 1, 1)
-    return ret, index_trans
+        raise ValueError
+
+
+def get_k_corated_name_by_atrr(dataset, k, web_name, threshold, top):
+    web_name = web_name[4:-4]
+    if threshold and top is None:
+        name = 'k_ratings_%s_%s_%s_th%s.csv' % (k, dataset, web_name, str(threshold))
+    elif top and threshold is None:
+        name = 'k_ratings_%s_%s_%s_top%s.csv' % (k, dataset, web_name, str(top))
+    else:
+        raise ValueError
+    return name
+
+
+def get_k_corated_index_by_att(dataset, k, web_name, threshold, top):
+    web_name = web_name[4:-4]
+    if threshold and top is None:
+        name = 'index_%s_%s_%s_th%s.csv' % (k, dataset, web_name, str(threshold))
+    elif top and threshold is None:
+        name = 'index_%s_%s_%s_top%s.csv' % (k, dataset, web_name, str(top))
+    else:
+        raise ValueError
+    return name
 
 
 def main():
     parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
-    parser.add_argument('-r', '--ratings', required=True)
-    parser.add_argument('-k', required=True, type=int)
+    parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
     parser.add_argument('-w', '--web', required=True)
-    parser.add_argument('-n', '--neighbor', default=10, type=int)
+    parser.add_argument('-k', required=True, type=int)
+    parser.add_argument('-s', '--suffix')
+    parser.add_argument('-t', '--threshold')
+    parser.add_argument('--top', type=int)
     args = parser.parse_args()
-    k = args.k
+    data_set = args.dataset
     web_name = args.web
-    ratings_name = args.ratings
-    nearest_neighbor_size = args.neighbor
-    with_index, index_trans = k_corate(k, ratings_name, web_name, nearest_neighbor_size)
-    filename = '%s_corated_ratings_from_%s_by_%s' % (k, ratings_name[:-4], web_name[:-4])
-    dump(filename, with_index)
-    filename = '%s_corated_ratings_from_%s_by_%s_index' % (k, ratings_name[:-4], web_name[:-4])
-    dump(filename, index_trans)
+    top = args.top
+    threshold = args.threshold
+    k = args.k
+    suffix = args.suffix
+    init(data_set, threshold, top)
+
+    def k_corated(webname):
+        k_corated, index_translator = k_corating_all(sorted_ratings.copy(), k)
+        k_file_name = get_k_corated_name_by_atrr(data_set, k, webname, threshold, top)
+        index_file_name = get_k_corated_index_by_att(data_set, k, webname, threshold, top)
+        dump(k_file_name, k_corated)
+        dump(index_file_name, index_translator)
+
+    if web_name != 'all':
+        k_corated(web_name)
+    else:
+        web_names = get_all_web_files(suffix)
+        for web_name in web_names:
+            k_corated(web_name)
 
 
 if __name__ == '__main__':
