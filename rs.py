@@ -263,9 +263,9 @@ def main():
     # ratings_[dataset].csv
     # web_[mode]_[threshold].csv
     parser = argparse.ArgumentParser(description='Create ratings and webs of a certain file')
-    parser.add_argument('-d', '--dataset', choices=dataset_choices)
-    parser.add_argument('-t', '--threshold', type=int)
-    parser.add_argument('-m', '--mode', choices=mode_choices)
+    parser.add_argument('-d', '--dataset', choices=dataset_choices, required=True)
+    parser.add_argument('-t', '--threshold', type=int, required=True)
+    parser.add_argument('-m', '--mode', choices=mode_choices, required=True)
     args = parser.parse_args()
     dataset = args.dataset
     original_ratings = get_ratings_from_ml_100k(dataset)
