@@ -1,8 +1,10 @@
-from rs import pd_rating, load, directory, neareast_neighbors_by_threshold, nearest_neighbors_by_fix_number
+from rs import pd_rating, load, directory, neareast_neighbors_by_threshold, nearest_neighbors_by_fix_number, \
+    mode_choices
 import numpy as np
 import math
 import argparse
 import logging
+import os
 
 dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
 
@@ -34,15 +36,29 @@ def main():
     args = parser.parse_args()
     data_set = args.dataset
     web_name = args.web
-    web = load(web_name)
     top = args.top
     threshold = args.threshold
-    if top and threshold is None:
-        ans, count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
-        logging.info('the RMSE result of %s predicted by %s is %s and %s', data_set, web_name[:-4], ans, count)
-    elif threshold and top is None:
-        ans = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
-        logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
+
+    def rmse(webname):
+        web = load(webname)
+        if top and threshold is None:
+            ans, count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
+            logging.info('the RMSE result of %s predicted by %s is %s and %s', data_set, web_name[:-4], ans, count)
+        elif threshold and top is None:
+            ans = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
+            logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], ans)
+
+    if web_name != 'all':
+        rmse(web_name)
+    else:
+        web_names = []
+        for file in os.listdir('.'):
+            for mode in mode_choices:
+                if mode in file:
+                    web_names.append(file)
+                    break
+        for web_name in web_names:
+            rmse(web_name)
 
 
 if __name__ == '__main__':
