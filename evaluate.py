@@ -33,6 +33,7 @@ def main():
     parser = argparse.ArgumentParser(description='RMSE test for a certain dataset')
     parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
     parser.add_argument('-w', '--web', required=True)
+    parser.add_argument('-s', '--suffix')
     parser.add_argument('-t', '--threshold')
     parser.add_argument('--top', type=int)
     args = parser.parse_args()
@@ -40,7 +41,7 @@ def main():
     web_name = args.web
     top = args.top
     threshold = args.threshold
-
+    suffix = args.suffix
     def rmse(webname):
         web = load(webname)
         if top and threshold is None:
@@ -54,11 +55,19 @@ def main():
         rmse(web_name)
     else:
         web_names = []
-        for file in os.listdir('.'):
-            for mode in mode_choices:
-                if mode in file:
-                    web_names.append(file)
-                    break
+        if suffix:
+            for file in os.listdir('.'):
+                if file.endswith(suffix):
+                    for mode in mode_choices:
+                        if mode in file:
+                            web_names.append(file)
+                            break
+        else:
+            for file in os.listdir('.'):
+                for mode in mode_choices:
+                    if mode in file:
+                        web_names.append(file)
+                        break
         for web_name in web_names:
             rmse(web_name)
 
