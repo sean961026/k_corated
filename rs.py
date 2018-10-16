@@ -220,7 +220,7 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_pa
     up = 0
     down = 0
     candidates = supp_item(original_ratings[:, item_id])
-    neighbors = neighbor_fun(candidates, user_id, item_id, web, neighbor_para)
+    neighbors = neighbor_fun(candidates, user_id, web, neighbor_para)
     for neighbor_id in neighbors:
         neighbor = original_ratings[neighbor_id, :]
         neighbor_mean = mean(neighbor)
@@ -264,6 +264,7 @@ def get_ratings_name_from_dataset(dataset):
 
 def get_web_name_from_attr(mode, threshold):
     return 'web_' + mode + '_' + str(threshold) + '.csv'
+
 
 def main():
     # will create
