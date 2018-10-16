@@ -14,7 +14,7 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     original_ratings = load(dataset + '.base.csv')
     size = test_set.shape[0]
     total = 0
-    diff = [0, 0, 0, 0]
+    diff = [0, 0, 0, 0, 0]
     count = {'normal': diff.copy(), 'over': diff.copy(), 'below': diff.copy(), 'exception': diff.copy()}
     for i in range(size):
         record = test_set[i, :]
