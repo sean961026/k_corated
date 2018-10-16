@@ -249,12 +249,10 @@ def get_all_web_files(suffix=None):
         for file in os.listdir('.'):
             if file.startswith('web') and file.endswith(suffix):
                 web_files.append(file)
-                break
     else:
         for file in os.listdir('.'):
             if file.startswith('web'):
                 web_files.append(file)
-                break
     return web_files
 
 
