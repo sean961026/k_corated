@@ -109,6 +109,10 @@ def get_k_corated_index_by_att(dataset, k, web_name, threshold, top):
     return name
 
 
+def get_index_from_krating_file(filename):
+    return 'index' + filename[9:]
+
+
 def main():
     parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
     parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)

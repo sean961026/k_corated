@@ -266,6 +266,12 @@ def get_web_name_from_attr(mode, threshold):
     return 'web_' + mode + '_' + str(threshold) + '.csv'
 
 
+def extract_dataset_from_filename(filename):
+    for dataset in dataset_choices:
+        if dataset in filename:
+            return dataset
+    return None
+
 def main():
     # will create
     # ratings_[dataset].csv

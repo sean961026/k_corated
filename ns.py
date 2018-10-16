@@ -1,4 +1,5 @@
-from rs import rating_scale, supp_item, supp_user, load
+from rs import rating_scale, supp_item, supp_user, load, extract_dataset_from_filename, get_ratings_name_from_dataset
+from k_corated_by import get_index_from_krating_file
 import logging
 import math
 import random
@@ -7,7 +8,7 @@ import argparse
 import os
 import matplotlib.pyplot as plt
 
-method_choices = ['best', 'dist']
+mode_choices = ['exp', 'indicate']
 sim_threshold = 0
 sim_mode = ''
 attack_ratings = None
@@ -19,7 +20,7 @@ o2k = lambda x: translator.index(x)
 
 
 def get_id_translator(attack_ratings_file_name):
-    index_file = attack_ratings_file_name[:-4] + '_index.csv'
+    index_file = get_index_from_krating_file(attack_ratings_file_name)
     if not os.path.exists(index_file):
         return [i for i in range(user_size)]
     index = np.loadtxt(index_file)
@@ -235,7 +236,8 @@ def init(_sim_threshold, _sim_mode, attack_ratings_file):
     sim_threshold = _sim_threshold
     sim_mode = _sim_mode
     attack_ratings = load(attack_ratings_file)
-    original_ratings = attack_ratings_file
+    dataset = extract_dataset_from_filename(attack_ratings_file)
+    original_ratings = load(get_ratings_name_from_dataset(dataset))
     translator = get_id_translator(attack_ratings_file)
     user_size = original_ratings.shape[0]
     item_size = original_ratings.shape[1]
@@ -248,7 +250,13 @@ def main():
     parser.add_argument('-c', '--correct', required=True, type=int)
     parser.add_argument('-e', '--eccen', type=float)
     parser.add_argument('-n', type=int)
+    parser.add_argument('--threshold', type=int)
+    parser.add_argument('-m,', '--mode', choices=mode_choices)
     args = parser.parse_args()
+    init(args.threshold, args.mode, args.ratings)
+    auxs = generate_auxs(args.total, args.correct)
+    statistical_analysis(auxs, args.eccen, args.n)
+
 
 
 if __name__ == '__main__':
