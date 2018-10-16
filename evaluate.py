@@ -45,10 +45,10 @@ def main():
         web = load(webname)
         if top and threshold is None:
             count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
-            logging.info('the RMSE result of %s predicted by %s is %s ', data_set, web_name[:-4], count)
+            logging.info('%s:%s ', web_name, count)
         elif threshold and top is None:
             count = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
-            logging.info('the RMSE result of %s predicted by %s is %s', data_set, web_name[:-4], count)
+            logging.info('%s:%s', web_name, count)
 
     if web_name != 'all':
         rmse(web_name)
