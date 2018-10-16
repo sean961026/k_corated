@@ -238,9 +238,9 @@ def init(_sim_threshold, _sim_mode, attack_ratings_file):
     attack_ratings = load(attack_ratings_file)
     dataset = extract_dataset_from_filename(attack_ratings_file)
     original_ratings = load(get_ratings_name_from_dataset(dataset))
-    translator = get_id_translator(attack_ratings_file)
     user_size = original_ratings.shape[0]
     item_size = original_ratings.shape[1]
+    translator = get_id_translator(attack_ratings_file)
 
 
 def main():
