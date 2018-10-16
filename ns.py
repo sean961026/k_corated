@@ -32,7 +32,7 @@ def sim_rate(rate1, rate2, mode):
     if mode == 'exp':
         return math.exp(-abs(rate1 - rate2) / rating_scale)
     elif mode == 'indicate':
-        return 1 if abs(rate1 - rate2) < sim_threshold else 0
+        return 1 if abs(rate1 - rate2) <= sim_threshold else 0
     else:
         raise ValueError
 
