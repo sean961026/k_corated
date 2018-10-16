@@ -14,7 +14,8 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     original_ratings = load(dataset + '.base.csv')
     size = test_set.shape[0]
     total = 0
-    count = {'normal': 0, 'over': 0, 'below': 0, 'exception': 0}
+    diff = [0, 0, 0, 0]
+    count = {'normal': diff.copy(), 'over': diff.copy(), 'below': diff.copy(), 'exception': diff.copy()}
     for i in range(size):
         record = test_set[i, :]
         test_user = int(record[0] - 1)
@@ -22,7 +23,7 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         test_rating = record[2]
         neighbors = neighbor_fun(test_user, web, neighbor_para)
         predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbors)
-        count[des] += 1
+        count[des][abs(int(predicted_rating) - test_rating)] += 1
         total += (test_rating - predicted_rating) ** 2
     return math.sqrt(total / size), count
 
