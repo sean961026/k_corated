@@ -227,7 +227,7 @@ def statistical_analysis(auxs, eccen, N):
             logging.info(analysis_data)
     elif eccen and N is None:
         result = de_attack_2_range(auxs, eccen, rg=range(user_size))
-        analysis_data = sa2de_all(result)
+        analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
         logging.info(analysis_data)
 
 
