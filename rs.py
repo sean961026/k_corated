@@ -23,7 +23,7 @@ unknown_weight = 99
 
 
 def get_ratings_from_ml_100k(dataset):
-    filename = 'ratings_' + dataset + '.csv'
+    filename = get_ratings_name_from_dataset(dataset)
     if os.path.exists(filename):
         original_ratings = load(filename)
     else:
@@ -258,6 +258,13 @@ def get_all_web_files(suffix=None):
     return web_files
 
 
+def get_ratings_name_from_dataset(dataset):
+    return 'ratings_' + dataset + '.csv'
+
+
+def get_web_name_from_attr(mode, threshold):
+    return 'web_' + mode + '_' + str(threshold) + '.csv'
+
 def main():
     # will create
     # ratings_[dataset].csv
@@ -274,11 +281,11 @@ def main():
     if mode == 'all':
         for mode in mode_branches:
             web = create_web(original_ratings, mode, co_threshold)
-            filename = 'web_' + mode + '_' + str(co_threshold)
+            filename = get_web_name_from_attr(mode, co_threshold)
             dump(filename, web)
     else:
         web = create_web(original_ratings, mode, co_threshold)
-        filename = 'web_' + mode + '_' + str(co_threshold)
+        filename = get_web_name_from_attr(mode, co_threshold)
         dump(filename, web)
 
 

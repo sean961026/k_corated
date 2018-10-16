@@ -1,5 +1,5 @@
 from rs import pd_rating, load, directory, neareast_neighbors_by_threshold, nearest_neighbors_by_fix_number, supp_item, \
-    dataset_choices, get_all_web_files, rating_scale
+    dataset_choices, get_all_web_files, rating_scale, get_ratings_name_from_dataset
 import numpy as np
 import math
 import argparse
@@ -8,7 +8,7 @@ import logging
 
 def RMSE(dataset, web, neighbor_fun, neighbor_para):
     test_set = np.loadtxt(directory + dataset + '.test', delimiter='\t')
-    original_ratings = load(dataset + '.base.csv')
+    original_ratings = load(get_ratings_name_from_dataset(dataset))
     size = test_set.shape[0]
     total = 0
     diff = [0] * rating_scale
