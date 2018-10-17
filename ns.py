@@ -222,9 +222,13 @@ def statistical_analysis(auxs, eccen, N):
         logging.info(analysis_data)
         dists = en_attack_2_range(auxs, N, rg=no_match_list + wrong_match_list)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
+        count = 0
         for dist in dists:
             analysis_data = sa2dist(dist)
             logging.info(analysis_data)
+            count += 1
+            if count > 5:
+                break
     elif eccen and N is None:
         result = de_attack_2_range(auxs, eccen, rg=range(user_size))
         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
