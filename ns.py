@@ -38,7 +38,8 @@ def sim_rate(rate1, rate2, mode):
 
 
 def item_weight(item_id):
-    return 1 / len(supp_item(attack_ratings[:, item_id]))
+    return 1
+    # return 1 / len(supp_item(attack_ratings[:, item_id]))
 
 
 def score(aux, record):
