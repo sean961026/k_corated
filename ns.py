@@ -191,7 +191,7 @@ def sa2scores(scores):
                 return i
         return None
 
-    temp = [(scores[i] - scores[i - 1]) / std for i in range(len(scores) - 1)]
+    temp = [(scores[i] - scores[i + 1]) / std for i in range(len(scores) - 1)]
 
     return {'eccen1': group_diff(1), 'eccen1.5': group_diff(1.5), 'max_diff': max(temp)}
 
