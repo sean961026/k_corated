@@ -267,7 +267,7 @@ def main():
     parser.add_argument('-n', type=int)
     parser.add_argument('--threshold', type=int)
     parser.add_argument('-m,', '--mode', choices=mode_choices)
-    parser.add_argument('-w', '--weight', choices=['equal', 'less'])
+    parser.add_argument('-w', '--weight', choices=['equal', 'less'], default='less')
     args = parser.parse_args()
     init(args.threshold, args.mode, args.ratings, args.weight)
     auxs = generate_auxs(args.total, args.correct)
