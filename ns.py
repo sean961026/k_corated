@@ -1,4 +1,5 @@
-from rs import rating_scale, supp_item, supp_user, load, extract_dataset_from_filename, get_ratings_name_from_dataset
+from rs import rating_scale, supp_item, supp_user, load, extract_dataset_from_filename, get_ratings_name_from_dataset, \
+    unknown_rating
 from k_corated_by import get_index_from_krating_file
 import logging
 import math
@@ -30,6 +31,8 @@ def get_id_translator(attack_ratings_file_name):
 
 
 def sim_rate(rate1, rate2):
+    if rate1 == unknown_rating or rate2 == unknown_rating:
+        return 0
     if sim_mode == 'exp':
         return math.exp(-abs(rate1 - rate2) / rating_scale)
     elif sim_mode == 'indicate':
