@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 mode_choices = ['exp', 'indicate']
 sim_threshold = 0
 sim_mode = ''
+weight_mode = ''
 attack_ratings = None
 original_ratings = None
 user_size = 0
@@ -28,18 +29,22 @@ def get_id_translator(attack_ratings_file_name):
     return index_data
 
 
-def sim_rate(rate1, rate2, mode):
-    if mode == 'exp':
+def sim_rate(rate1, rate2):
+    if sim_mode == 'exp':
         return math.exp(-abs(rate1 - rate2) / rating_scale)
-    elif mode == 'indicate':
+    elif sim_mode == 'indicate':
         return 1 if abs(rate1 - rate2) <= sim_threshold else 0
     else:
         raise ValueError
 
 
 def item_weight(item_id):
-    return 1
-    # return 1 / len(supp_item(attack_ratings[:, item_id]))
+    if weight_mode == 'equal':
+        return 1
+    elif weight_mode == 'less':
+        return 1 / len(supp_item(attack_ratings[:, item_id]))
+    else:
+        raise ValueError
 
 
 def score(aux, record):
@@ -47,7 +52,7 @@ def score(aux, record):
     sum = 0
     for item_id in item_ids:
         weight = item_weight(item_id)
-        sum += weight * sim_rate(aux[item_id], record[item_id], sim_mode)
+        sum += weight * sim_rate(aux[item_id], record[item_id])
     return sum
 
 
@@ -184,8 +189,12 @@ def sa2dist(dist):
         temp = [dist[i][0] for i in range(size)]
         return sum(temp)
 
+    def top_group(size):
+        return [i[1] for i in dist]
+
     analysis_data = {'max_pro': dist[0][0], '90p': percent2size(0.9), '95p': percent2size(0.95),
-                     'top10': size2propsum(10), 'top20': size2propsum(20)}
+                     'top10': size2propsum(10), 'top20': size2propsum(20), 'group5': top_group(5),
+                     'group10': top_group(10)}
     return analysis_data
 
 
@@ -236,8 +245,9 @@ def statistical_analysis(auxs, eccen, N):
         logging.info(analysis_data)
 
 
-def init(_sim_threshold, _sim_mode, attack_ratings_file):
-    global sim_threshold, sim_mode, attack_ratings, original_ratings, translator, user_size, item_size
+def init(_sim_threshold, _sim_mode, attack_ratings_file, _weight_mode):
+    global sim_threshold, sim_mode, attack_ratings, original_ratings, translator, user_size, item_size, weight_mode
+    weight_mode = _weight_mode
     sim_threshold = _sim_threshold
     sim_mode = _sim_mode
     attack_ratings = load(attack_ratings_file)
@@ -257,8 +267,9 @@ def main():
     parser.add_argument('-n', type=int)
     parser.add_argument('--threshold', type=int)
     parser.add_argument('-m,', '--mode', choices=mode_choices)
+    parser.add_argument('-w', '--weight', choices=['equal', 'less'])
     args = parser.parse_args()
-    init(args.threshold, args.mode, args.ratings)
+    init(args.threshold, args.mode, args.ratings, args.weight)
     auxs = generate_auxs(args.total, args.correct)
     statistical_analysis(auxs, args.eccen, args.n)
 
