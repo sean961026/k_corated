@@ -142,7 +142,7 @@ def entropic_de(scores):
 def top_N_from_en(scores, N):
     dist = entropic_de(scores)
     dist.sort(key=lambda x: x[0], reverse=True)
-    sa2scores(scores)
+    logging.info(sa2scores(scores))
     logging.info(sa2dist(dist))
     return [dist[i] for i in range(N)]
 
@@ -183,6 +183,17 @@ def sa2scores(scores):
     plt.figure()
     plt.plot(x, y)
     plt.savefig('score_dist_%s.jpg' % pro_dist_count)
+
+    def group_diff(diff):
+        std = np.std(scores)
+        for i in range(len(scores) - 1):
+            if (scores[i] - scores[i - 1]) / std >= diff:
+                return i
+        return None
+
+    return {'eccen1': group_diff(1), 'eccen1.5': group_diff(1.5)}
+
+
 
 
 def sa2dist(dist):
