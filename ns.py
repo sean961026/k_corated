@@ -195,6 +195,11 @@ def sa2dist(dist):
     def top_group(size):
         return [dist[i][1] for i in range(size)]
 
+    x = [i for i in range(len(dist))]
+    y = [dist[i][0] for i in range(len(dist))]
+    plt.figure()
+    plt.plot(x, y)
+    plt.savefig('pro_dist.jpg')
     analysis_data = {'max_pro': dist[0][0], '90p': percent2size(0.9), '95p': percent2size(0.95),
                      'top10': size2propsum(10), 'top20': size2propsum(20), 'group5': top_group(5),
                      'group10': top_group(10)}
