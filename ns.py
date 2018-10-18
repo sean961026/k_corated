@@ -142,6 +142,8 @@ def entropic_de(scores):
 def top_N_from_en(scores, N):
     dist = entropic_de(scores)
     dist.sort(key=lambda x: x[0], reverse=True)
+    sa2scores(scores)
+    logging.info(sa2dist(dist))
     return [dist[i] for i in range(N)]
 
 
@@ -174,9 +176,17 @@ def en_attack_2_range(auxs, N, rg):
     return dists
 
 
+def sa2scores(scores):
+    scores.sort(reverse=True)
+    x = [i for i in range(len(scores))]
+    y = [score for score in scores]
+    plt.figure()
+    plt.plot(x, y)
+    plt.savefig('score_dist_%s.jpg' % pro_dist_count)
+
+
 def sa2dist(dist):
     global pro_dist_count
-    dist.sort(key=lambda x: x[0], reverse=True)
 
     def percent2size(percent):
         up_limit = len(dist)
@@ -241,15 +251,9 @@ def statistical_analysis(auxs, eccen, N):
         result = de_attack_2_range(auxs, eccen, rg=range(user_size))
         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
         logging.info(analysis_data)
-        dists = en_attack_2_range(auxs, N, rg=no_match_list + wrong_match_list)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
-        count = 0
-        for dist in dists:
-            analysis_data = sa2dist(dist)
-            logging.info(analysis_data)
-            count += 1
-            if count > 5:
-                break
+        wrong_list = no_match_list + wrong_match_list
+        dists = en_attack_2_range(auxs, N, rg=[wrong_list[i] for i in range(5)])
     elif eccen and N is None:
         result = de_attack_2_range(auxs, eccen, rg=range(user_size))
         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
