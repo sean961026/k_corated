@@ -187,7 +187,7 @@ def sa2scores(scores):
     def group_diff(diff):
         std = np.std(scores)
         for i in range(len(scores) - 1):
-            if (scores[i] - scores[i - 1]) / std >= diff:
+            if (scores[i] - scores[i + 1]) / std >= diff:
                 return i
         return None
 
