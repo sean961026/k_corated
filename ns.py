@@ -190,7 +190,7 @@ def sa2dist(dist):
         return sum(temp)
 
     def top_group(size):
-        return [i[1] for i in dist]
+        return [i[size][1] for i in range(size)]
 
     analysis_data = {'max_pro': dist[0][0], '90p': percent2size(0.9), '95p': percent2size(0.95),
                      'top10': size2propsum(10), 'top20': size2propsum(20), 'group5': top_group(5),
