@@ -19,6 +19,7 @@ user_size = 0
 item_size = 0
 translator = []
 o2k = lambda x: translator.index(x)
+pro_dist_count = 0
 
 
 def get_id_translator(attack_ratings_file_name):
@@ -174,6 +175,7 @@ def en_attack_2_range(auxs, N, rg):
 
 
 def sa2dist(dist):
+    global pro_dist_count
     dist.sort(key=lambda x: x[0], reverse=True)
 
     def percent2size(percent):
@@ -199,7 +201,8 @@ def sa2dist(dist):
     y = [dist[i][0] for i in range(len(dist))]
     plt.figure()
     plt.plot(x, y)
-    plt.savefig('pro_dist.jpg')
+    plt.savefig('pro_dist_%s.jpg' % pro_dist_count)
+    pro_dist_count += 1
     analysis_data = {'max_pro': dist[0][0], '90p': percent2size(0.9), '95p': percent2size(0.95),
                      'top10': size2propsum(10), 'top20': size2propsum(20), 'group5': top_group(5),
                      'group10': top_group(10)}
