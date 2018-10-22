@@ -1,6 +1,7 @@
 from rs import rating_scale, supp_item, supp_user, load, extract_dataset_from_filename, get_ratings_name_from_dataset, \
     unknown_rating
 from k_corated_by import get_index_from_krating_file
+from dist import hellinger_distance, get_prop_dist_from_ratings
 import logging
 import math
 import random
@@ -19,7 +20,11 @@ user_size = 0
 item_size = 0
 translator = []
 o2k = lambda x: translator.index(x)
-pro_dist_count = 0
+k2o = lambda x: translator[x]
+eccen = 0
+total = 0
+correct = 0
+distance_pic_count = 0
 
 
 def get_id_translator(attack_ratings_file_name):
@@ -78,7 +83,7 @@ def analyze_scores(scores):
     return {'max1': max1, 'max2': max2, 'std': std, 'threshold': threshold}
 
 
-def generate_aux(user_id, total, correct):
+def generate_aux(user_id):
     def random_wrong(start, end, right_value, tp):
         if tp == int:
             while True:
@@ -110,16 +115,16 @@ def generate_aux(user_id, total, correct):
     return aux
 
 
-def generate_auxs(total, correct):
+def generate_auxs():
     logging.info('generating auxs from ratings')
     auxs = [0] * original_ratings.shape[0]
     for i in range(original_ratings.shape[0]):
-        aux = generate_aux(i, total, correct)
+        aux = generate_aux(i)
         auxs[o2k(i)] = aux
     return auxs
 
 
-def de_anonymization(scores, eccen):
+def de_anonymization(scores):
     data = analyze_scores(scores)
     threshold = data['threshold']
     if threshold < eccen:
@@ -139,21 +144,13 @@ def entropic_de(scores):
     return dist
 
 
-def top_N_from_en(scores, N):
-    dist = entropic_de(scores)
-    dist.sort(key=lambda x: x[0], reverse=True)
-    logging.info(sa2scores(scores))
-    logging.info(sa2dist(dist))
-    return [dist[i] for i in range(N)]
-
-
-def de_attack_2_range(auxs, eccen, rg):
+def de_attack_2_range(auxs, rg):
     logging.info('attacking the ratings by best guess')
     result = []
     for i in rg:
         aux = auxs[i]
         scores = get_scores(aux)
-        ans = de_anonymization(scores, eccen)
+        ans = de_anonymization(scores)
         threshold = analyze_scores(scores)['threshold']
         if ans is None:
             result.append(('no_match', threshold))
@@ -165,71 +162,13 @@ def de_attack_2_range(auxs, eccen, rg):
     return result
 
 
-def en_attack_2_range(auxs, N, rg):
+def en_attack_2_range(auxs, rg):
     logging.info('attacking the ratings by distribution')
-    dists = []
     for i in rg:
         aux = auxs[i]
         scores = get_scores(aux)
-        dist = top_N_from_en(scores, N)
-        dists.append(dist)
-    return dists
-
-
-def sa2scores(scores):
-    scores.sort(reverse=True)
-    x = [i for i in range(len(scores))]
-    y = [score for score in scores]
-    plt.figure()
-    plt.plot(x, y)
-    plt.savefig('score_dist_%s.jpg' % pro_dist_count)
-    std = np.std(scores)
-
-    def group_diff(diff):
-        for i in range(len(scores) - 1):
-            if (scores[i] - scores[i + 1]) / std >= diff:
-                return i
-        return None
-
-    temp = [(scores[i] - scores[i + 1]) / std for i in range(len(scores) - 1)]
-
-    return {'eccen1': group_diff(1), 'eccen1.5': group_diff(1.5), 'max_diff': max(temp)}
-
-
-
-
-def sa2dist(dist):
-    global pro_dist_count
-
-    def percent2size(percent):
-        up_limit = len(dist)
-        while up_limit > 0:
-            temp = [dist[i][0] for i in range(up_limit)]
-            s2 = sum(temp)
-            s1 = s2 - temp.pop()
-            if s1 < percent and s2 >= percent:
-                return len(temp)
-            else:
-                up_limit -= 1
-        return 0
-
-    def size2propsum(size):
-        temp = [dist[i][0] for i in range(size)]
-        return sum(temp)
-
-    def top_group(size):
-        return [dist[i][1] for i in range(size)]
-
-    x = [i for i in range(len(dist))]
-    y = [dist[i][0] for i in range(len(dist))]
-    plt.figure()
-    plt.plot(x, y)
-    plt.savefig('pro_dist_%s.jpg' % pro_dist_count)
-    pro_dist_count += 1
-    analysis_data = {'max_pro': dist[0][0], '90p': percent2size(0.9), '95p': percent2size(0.95),
-                     'top10': size2propsum(10), 'top20': size2propsum(20), 'group5': top_group(5),
-                     'group10': top_group(10)}
-    return analysis_data
+        dist = entropic_de(scores)
+        sa2en_attack(i, scores, dist)
 
 
 def sa2de_all(result):
@@ -259,34 +198,69 @@ def sa2de_all(result):
             'attack_size': len(result)}, no_match_list, success_list, wrong_match_list
 
 
-def statistical_analysis(auxs, eccen, N):
-    if eccen and N:
+def candi_list(scores):
+    candidates = []
+    for i in range(len(scores)):
+        if scores[i] >= correct:
+            candidates.append(i)
+    return candidates
+
+
+def sa2en_attack(attackee, scores, dist):
+    global distance_pic_count
+    dist.sort(key=lambda x: x[0], reverse=True)
+
+    def percent2size(percent):
+        up_limit = len(dist)
+        while up_limit > 0:
+            temp = [dist[i][0] for i in range(up_limit)]
+            s2 = sum(temp)
+            s1 = s2 - temp.pop()
+            if s1 < percent and s2 >= percent:
+                return len(temp)
+            else:
+                up_limit -= 1
+        return 0
+
+    def size2propsum(size):
+        temp = [dist[i][0] for i in range(size)]
+        return sum(temp)
+
+    def top_group(size):
+        return [dist[i][1] for i in range(size)]
+
+    candi = candi_list(scores)
+    attackee_record = attack_ratings[attackee, :]
+    items_id = supp_user(attackee_record)
+    x = [i for i in range(items_id)]
+    y = []
+    for item_id in items_id:
+        global_ratings = supp_item(attack_ratings[:, item_id])
+        gp = get_prop_dist_from_ratings(global_ratings)
+        local_ratings = [global_ratings[i] for i in candi]
+        lp = get_prop_dist_from_ratings(local_ratings)
+        y.append(hellinger_distance(gp, lp))
+    plt.figure()
+    plt.plot(x, y)
+    plt.savefig('dist_%s.jpg' % distance_pic_count)
+    distance_pic_count += 1
+    analysis_data = {'attackee': attackee, 'group10': top_group(10), 'top10': size2propsum(10), 'max_pro': dist[0][0],
+                     'candidates_size': len(candi), 'candi_prop': size2propsum(len(candi))}
+    return analysis_data
+
+
+def statistical_analysis(auxs):
+    if eccen:
         result = de_attack_2_range(auxs, eccen, rg=range(user_size))
         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
         logging.info(analysis_data)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
         wrong_list = no_match_list + wrong_match_list
         dists = en_attack_2_range(auxs, N, rg=[wrong_list[i] for i in range(5)])
-    elif eccen and N is None:
-        result = de_attack_2_range(auxs, eccen, rg=range(user_size))
-        analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
-        logging.info(analysis_data)
 
 
-def init(_sim_threshold, _sim_mode, attack_ratings_file, _weight_mode):
-    global sim_threshold, sim_mode, attack_ratings, original_ratings, translator, user_size, item_size, weight_mode
-    weight_mode = _weight_mode
-    sim_threshold = _sim_threshold
-    sim_mode = _sim_mode
-    attack_ratings = load(attack_ratings_file)
-    dataset = extract_dataset_from_filename(attack_ratings_file)
-    original_ratings = load(get_ratings_name_from_dataset(dataset))
-    user_size = original_ratings.shape[0]
-    item_size = original_ratings.shape[1]
-    translator = get_id_translator(attack_ratings_file)
-
-
-def main():
+def init():
+    global weight_mode, sim_threshold, sim_mode, attack_ratings, original_ratings, user_size, item_size, translator, correct, total, eccen
     parser = argparse.ArgumentParser(description='a ns attack simulation and statitical analysis')
     parser.add_argument('-r', '--ratings', required=True)
     parser.add_argument('-t', '--total', required=True, type=int)
@@ -297,9 +271,24 @@ def main():
     parser.add_argument('-m,', '--mode', choices=mode_choices)
     parser.add_argument('-w', '--weight', choices=['equal', 'less'], default='less')
     args = parser.parse_args()
-    init(args.threshold, args.mode, args.ratings, args.weight)
-    auxs = generate_auxs(args.total, args.correct)
-    statistical_analysis(auxs, args.eccen, args.n)
+    weight_mode = args.weight
+    sim_threshold = args.threshold
+    sim_mode = args.mode
+    attack_ratings = load(args.ratings)
+    dataset = extract_dataset_from_filename(args.ratings)
+    original_ratings = load(get_ratings_name_from_dataset(dataset))
+    user_size = original_ratings.shape[0]
+    item_size = original_ratings.shape[1]
+    translator = get_id_translator(args.ratings)
+    correct = args.correct
+    total = args.total
+    eccen = args.eccen
+
+
+def main():
+    init()
+    auxs = generate_auxs()
+    statistical_analysis(auxs)
 
 
 if __name__ == '__main__':
