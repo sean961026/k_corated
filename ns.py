@@ -79,7 +79,11 @@ def analyze_scores(scores):
     max1 = max(temp)
     temp.remove(max1)
     max2 = max(temp)
-    threshold = (max1 - max2) / std
+    try:
+        threshold = (max1 - max2) / std
+    except:
+        logging.info(scores)
+        logging.info(std)
     return {'max1': max1, 'max2': max2, 'std': std, 'threshold': threshold}
 
 
