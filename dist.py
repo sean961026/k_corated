@@ -9,7 +9,6 @@ def hellinger_distance(p, q):
     for pi, qi in zipped:
         s += math.sqrt(pi * qi)
     distance = math.sqrt(1 - s)
-    logging.info({'p': p, 'q': q, 'distance': distance})
     return distance
 
 
