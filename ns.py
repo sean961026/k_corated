@@ -140,11 +140,14 @@ def de_anonymization(scores):
 def entropic_de(scores):
     data = analyze_scores(scores)
     std = data['std']
-    temp = [math.exp(i / std) for i in scores]
-    total = sum(temp)
-    c = 1 / total
-    dist = [(c * temp[i], i) for i in range(len(temp))]
-    return dist
+    if std != 0:
+        temp = [math.exp(i / std) for i in scores]
+        total = sum(temp)
+        c = 1 / total
+        dist = [(c * temp[i], i) for i in range(len(temp))]
+        return dist
+    else:
+        return [(0, i) for i in range(len(scores))]
 
 
 def de_attack_2_range(auxs, rg):
