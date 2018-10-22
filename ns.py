@@ -235,7 +235,8 @@ def sa2en_attack(attackee, scores, dist):
     x = [i for i in range(len(items_id))]
     y = []
     for item_id in items_id:
-        global_ratings = supp_item(attack_ratings[:, item_id])
+        rated_users = supp_item(attack_ratings[:, item_id])
+        global_ratings = [attack_ratings[user_id, item_id] for user_id in rated_users]
         gp = get_prop_dist_from_ratings(global_ratings)
         local_ratings = [global_ratings[i] for i in candi]
         lp = get_prop_dist_from_ratings(local_ratings)
