@@ -238,7 +238,11 @@ def sa2en_attack(attackee, scores, dist):
         rated_users = supp_item(attack_ratings[:, item_id])
         global_ratings = [attack_ratings[user_id, item_id] for user_id in rated_users]
         gp = get_prop_dist_from_ratings(global_ratings)
-        local_ratings = [global_ratings[i] for i in candi]
+        local_ratings = []
+        for candidate in candi:
+            r = attack_ratings[candidate, items_id]
+            if r != unknown_rating:
+                local_ratings.append(r)
         lp = get_prop_dist_from_ratings(local_ratings)
         y.append(hellinger_distance(gp, lp))
     plt.figure()
