@@ -168,7 +168,7 @@ def en_attack_2_range(auxs, rg):
         aux = auxs[i]
         scores = get_scores(aux)
         dist = entropic_de(scores)
-        sa2en_attack(i, scores, dist)
+        logging.info(sa2en_attack(i, scores, dist))
 
 
 def sa2de_all(result):
