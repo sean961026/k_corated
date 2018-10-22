@@ -240,7 +240,7 @@ def sa2en_attack(attackee, scores, dist):
         gp = get_prop_dist_from_ratings(global_ratings)
         local_ratings = []
         for candidate in candi:
-            r = attack_ratings[candidate, items_id]
+            r = attack_ratings[candidate, item_id]
             if r != unknown_rating:
                 local_ratings.append(r)
         lp = get_prop_dist_from_ratings(local_ratings)
