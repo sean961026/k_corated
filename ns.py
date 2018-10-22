@@ -80,7 +80,7 @@ def analyze_scores(scores):
     temp.remove(max1)
     max2 = max(temp)
     if std == 0:
-        threshold = 0
+        threshold = 0.5
     else:
         threshold = (max1 - max2) / std
     return {'max1': max1, 'max2': max2, 'std': std, 'threshold': threshold}
