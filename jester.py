@@ -1,6 +1,6 @@
 import numpy as np
 from rs import unknown_rating, load, dump
-
+import argparse
 
 def create_ratings(user_size, filename):
     ratings = np.zeros(shape=(user_size, 150))
@@ -15,4 +15,9 @@ def create_ratings(user_size, filename):
     return ratings
 
 
-create_ratings(63978, 'test')
+def main():
+    parser = argparse.ArgumentParser(description='create ratings')
+    parser.add_argument('-s', '--size', type=int, required=True)
+    parser.add_argument('-f', '--filename', required=True)
+    args = parser.parse_args()
+    create_ratings(args.size, args.filename)
