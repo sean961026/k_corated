@@ -8,7 +8,7 @@ def create_ratings(user_size, type, filename):
         lines = file.readlines()
         for line in lines:
             user_id, item_id, rating = line.split('\t\t')
-            if user_id >= user_size:
+            if int(user_id) >= user_size:
                 break
             ratings[int(user_id) - 1, int(item_id) - 1] = type(rating)
     dump(filename, ratings)
