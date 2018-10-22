@@ -1,5 +1,5 @@
 from rs import rating_scale, supp_item, supp_user, load, extract_dataset_from_filename, get_ratings_name_from_dataset, \
-    unknown_rating
+    unknown_rating, min_rating, max_rating
 from k_corated_by import get_index_from_krating_file
 from dist import hellinger_distance, get_prop_dist_from_ratings
 import logging
@@ -114,7 +114,7 @@ def generate_aux(user_id):
         if i in correct_list:
             aux[i] = user[i]
         else:
-            aux[i] = random_wrong(1, 5, user[i], int)
+            aux[i] = random_wrong(min_rating, max_rating, user[i], int)
     return aux
 
 
