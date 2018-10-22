@@ -251,12 +251,12 @@ def sa2en_attack(attackee, scores, dist):
 
 def statistical_analysis(auxs):
     if eccen:
-        result = de_attack_2_range(auxs, eccen, rg=range(user_size))
+        result = de_attack_2_range(auxs, rg=range(user_size))
         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
         logging.info(analysis_data)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
         wrong_list = no_match_list + wrong_match_list
-        dists = en_attack_2_range(auxs, N, rg=[wrong_list[i] for i in range(5)])
+        en_attack_2_range(auxs, rg=[wrong_list[i] for i in range(5)])
 
 
 def init():
