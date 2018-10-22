@@ -10,7 +10,7 @@ def create_ratings(user_size, filename):
             user_id, item_id, rating = line.split('\t\t')
             if int(user_id) >= user_size:
                 break
-            ratings[int(user_id) - 1, int(item_id) - 1] = round(float(rating) + 21)
+            ratings[int(user_id) - 1, int(item_id) - 1] = round(float(rating) + 11)
     dump(filename, ratings)
     return ratings
 
