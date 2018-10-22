@@ -232,7 +232,7 @@ def sa2en_attack(attackee, scores, dist):
     candi = candi_list(scores)
     attackee_record = attack_ratings[attackee, :]
     items_id = supp_user(attackee_record)
-    x = [i for i in range(items_id)]
+    x = [i for i in range(len(items_id))]
     y = []
     for item_id in items_id:
         global_ratings = supp_item(attack_ratings[:, item_id])
