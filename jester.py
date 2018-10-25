@@ -16,7 +16,7 @@ def create_ratings(user_size, filename, mode):
                 user_id, item_id, rating = line.split('\t\t')
                 user_id = int(user_id) - 1
                 if user_id in sample:
-                    ratings[int(user_id) - 1, int(item_id) - 1] = round(float(rating) + 11)
+                    ratings[sample.index(user_id), int(item_id) - 1] = round(float(rating) + 11)
         elif mode == 'top':
             for line in lines:
                 user_id, item_id, rating = line.split('\t\t')
