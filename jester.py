@@ -35,7 +35,7 @@ def main():
     parser.add_argument('-f', '--filename', required=True)
     parser.add_argument('-m''--mode', default='top', choices=['top', 'random'])
     args = parser.parse_args()
-    create_ratings(args.size, args.filename)
+    create_ratings(args.size, args.filename, args.mode)
 
 
 if __name__ == '__main__':
