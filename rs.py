@@ -217,7 +217,10 @@ def load(filename):
 
 def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_para):
     user = original_ratings[user_id, :]
-    user_mean = mean(user)
+    try:
+        user_mean = mean(user)
+    except ZeroDivisionError:
+        logging.info(user_id)
     up = 0
     down = 0
     candidates = supp_item(original_ratings[:, item_id])
