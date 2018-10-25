@@ -39,4 +39,15 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import logging
+
+    with open('jester_dataset_2/jester_ratings.dat') as file:
+        lines = file.readlines()
+        all = [i + 1 for i in range(63978)]
+        for line in lines:
+            user_id, item_id, rating = line.split('\t\t')
+            user_id = int(user_id)
+            if user_id in all:
+                all.remove(user_id)
+                logging.info(user_id)
+        logging.info(all)
