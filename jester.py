@@ -348,9 +348,15 @@ def create_ratings(user_size, filename, mode):
         for user in no_rating_users:
             temp_sample.remove(user - 1)
         if mode == 'random':
-            sample = random.sample(temp_sample, user_size)
+            if user_size < len(temp_sample):
+                sample = random.sample(temp_sample, user_size)
+            else:
+                sample = temp_sample
         elif mode == 'top':
-            sample = [temp_sample[i] for i in range(user_size)]
+            if user_size < len(temp_sample):
+                sample = [temp_sample[i] for i in range(user_size)]
+            else:
+                sample = temp_sample
         else:
             raise ValueError
         for line in lines:
