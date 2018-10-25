@@ -285,6 +285,9 @@ def main():
     args = parser.parse_args()
     dataset = args.dataset
     original_ratings = get_ratings_from_ml_100k(dataset)
+    global user_size, item_size
+    user_size = original_ratings.shape[0]
+    item_size = original_ratings.shape[1]
     mode = args.mode
     co_threshold = args.threshold
     if mode == 'all':
