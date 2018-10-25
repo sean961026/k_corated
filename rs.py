@@ -14,7 +14,8 @@ min_rating = 1
 max_rating = 21
 rating_scale = max_rating - min_rating + 1
 user_size = 943
-item_size = 1682
+# item_size = 1682
+item_size = 150
 mode_branches = ['distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
 mode_choices = ['all'] + mode_branches
 dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
@@ -271,6 +272,7 @@ def extract_dataset_from_filename(filename):
         if dataset in filename:
             return dataset
     return None
+
 
 def main():
     # will create
