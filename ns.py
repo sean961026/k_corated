@@ -267,6 +267,7 @@ def statistical_analysis(auxs):
         logging.info(analysis_data)
         logging.info('analyzing the result of distribution on those best-guess-failure cases')
         wrong_list = no_match_list + wrong_match_list
+        wrong_list.sort(reverse=True)
         en_attack_2_range(auxs, rg=[wrong_list[i] for i in range(5)])
 
 
