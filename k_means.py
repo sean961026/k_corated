@@ -76,6 +76,9 @@ def k_means(original_ratings, k, mode):
         if i not in seeds:
             distances = [cluster.distance_to(i) for cluster in clusters]
             which = distances.index(min(distances))
-            logging.info('point %s goes to %s cluster', i, which)
             clusters[which].add_new_point(i)
+    s = 0
+    for cluster in clusters:
+        s += len(cluster.points)
+    logging.info('the sum is %s', s)
     return clusters
