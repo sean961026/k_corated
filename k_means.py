@@ -1,6 +1,6 @@
 import random
 import numpy as np
-
+import logging
 
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
@@ -49,7 +49,7 @@ class Cluster:
         self._update_centroid(point)
 
     def distance_to(self, point):
-        return (self._cost_of(point) + 1) / (self._corated_of(point) + 1)
+        return self._cost_of(point) / (self._corated_of(point) + 1)
 
     def _cost_of(self, point):
         new = 0
@@ -73,6 +73,7 @@ def k_means(original_ratings, k, mode):
     clusters = [Cluster(original_ratings, normalize(original_ratings[seed, :])) for seed in seeds]
     for i in range(original_ratings.shape[0]):
         distances = [cluster.distance_to(i) for cluster in clusters]
+        logging.info(distances)
         which = distances.index(min(distances))
         clusters[which].add_new_point(i)
     return clusters

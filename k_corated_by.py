@@ -56,7 +56,6 @@ def sort_through_clusters(ratings, clusters):
     index_to_copy = 0
     for cluster in clusters:
         points = cluster.points
-        logging.info(points)
         for point in points:
             temp_vec = list(original_ratings[point, :])
             temp_vec.append(point + 1)
