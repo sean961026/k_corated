@@ -30,14 +30,10 @@ def normalize(vec):
 
 
 class Cluster:
-    original_ratings = None
-    centroid = None
-    points = []
-
     def __init__(self, original_ratings, centroid_index):
         self.centroid = normalize(original_ratings[centroid_index, :])
         self.original_ratings = original_ratings
-        self.points.append(centroid_index)
+        self.points = [centroid_index]
 
     def _update_centroid(self, point):
         point_vec = normalize(self.original_ratings[point, :])
