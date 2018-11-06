@@ -79,6 +79,7 @@ def k_means(original_ratings, k, mode):
             clusters[which].add_new_point(i)
     s = 0
     for cluster in clusters:
+        logging.info('size of cluster is %s', len(cluster.points))
         s += len(cluster.points)
     logging.info('the sum is %s', s)
     return clusters
