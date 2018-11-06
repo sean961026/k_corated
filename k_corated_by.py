@@ -4,12 +4,14 @@ from functools import cmp_to_key
 import numpy as np
 import logging
 import argparse
+from k_means import k_means
 
 original_ratings = None
 sorted_ratings = None
 neighbor_fun = None
 neighbor_para = None
 web = None
+
 
 def set_cmp(user1, user2):
     items_1 = supp_user(user1)
@@ -47,6 +49,21 @@ def sort(ratings):
     return ret
 
 
+def sort_through_clusters(ratings, clusters):
+    user_size = ratings.shape[0]
+    item_size = ratings.shape[1]
+    ret = np.zeros(user_size, item_size + 1)
+    index_to_copy = 0
+    for cluster in clusters:
+        points = cluster.points
+        for point in points:
+            temp_vec = list(original_ratings[point, :])
+            temp_vec.append(point)
+            ret[index_to_copy, :] = temp_vec
+            index_to_copy += 1
+    return ret
+
+
 def k_corating_slice(sorted_ratings, myslice):  # [start,end)
     logging.info('k corating slice(%s,%s)', myslice.start, myslice.stop)
     part_ratings = sorted_ratings[myslice, :]
@@ -73,10 +90,20 @@ def k_corating_all(sorted_ratings, k):
     return k_corated, index_translator
 
 
+def corating_all_through_clusters(sorted_ratings, clusters):
+    start = 0
+    for cluster in clusters:
+        myslice = slice(start, start + len(cluster.points))
+        start += len(cluster.points)
+        k_corating_slice(sorted_ratings, myslice)
+    index_translator = sorted_ratings[:, -1]
+    k_corated = np.delete(sorted_ratings, sorted_ratings.shape[1] - 1, 1)
+    return k_corated, index_translator
+
+
 def init(dataset, threshold, top):
     global original_ratings, neighbor_fun, neighbor_para, sorted_ratings
     original_ratings = load(get_ratings_name_from_dataset(dataset))
-    sorted_ratings = sort(original_ratings)
     if threshold and top is None:
         neighbor_fun = neareast_neighbors_by_threshold
         neighbor_para = threshold
@@ -87,7 +114,7 @@ def init(dataset, threshold, top):
         raise ValueError
 
 
-def get_k_corated_name_by_atrr(dataset, k, web_name, threshold, top):
+def get_k_corated_name_by_attr(dataset, k, web_name, threshold, top):
     web_name = web_name[4:-4]
     if threshold and top is None:
         name = 'k_ratings_%s_%s_%s_th%s.csv' % (k, dataset, web_name, str(threshold))
@@ -98,7 +125,7 @@ def get_k_corated_name_by_atrr(dataset, k, web_name, threshold, top):
     return name
 
 
-def get_k_corated_index_by_att(dataset, k, web_name, threshold, top):
+def get_k_corated_index_by_attr(dataset, k, web_name, threshold, top):
     web_name = web_name[4:-4]
     if threshold and top is None:
         name = 'index_%s_%s_%s_th%s.csv' % (k, dataset, web_name, str(threshold))
@@ -121,6 +148,8 @@ def main():
     parser.add_argument('-s', '--suffix')
     parser.add_argument('-t', '--threshold')
     parser.add_argument('--top', type=int)
+    parser.add_argument('-c', '--cluster', action='store_true')
+    parser.add_argument('-m', '--mode')
     args = parser.parse_args()
     data_set = args.dataset
     web_name = args.web
@@ -128,14 +157,22 @@ def main():
     threshold = args.threshold
     k = args.k
     suffix = args.suffix
+    cluster_flag = args.cluster
+    cluster_mode = args.mode
     init(data_set, threshold, top)
 
     def k_corated(webname):
-        global web
+        global web, sorted_ratings, original_ratings
         web = load(webname)
-        k_corated, index_translator = k_corating_all(sorted_ratings.copy(), k)
-        k_file_name = get_k_corated_name_by_atrr(data_set, k, webname, threshold, top)
-        index_file_name = get_k_corated_index_by_att(data_set, k, webname, threshold, top)
+        if cluster_flag:
+            clusters = k_means(original_ratings, k, cluster_mode)
+            sorted_ratings = sort_through_clusters(original_ratings, clusters)
+            k_corated, index_translator = corating_all_through_clusters(sorted_ratings.copy(), clusters)
+        else:
+            sorted_ratings = sort(original_ratings)
+            k_corated, index_translator = k_corating_all(sorted_ratings.copy(), k)
+        k_file_name = get_k_corated_name_by_attr(data_set, k, webname, threshold, top)
+        index_file_name = get_k_corated_index_by_attr(data_set, k, webname, threshold, top)
         dump(k_file_name, k_corated)
         dump(index_file_name, index_translator)
 

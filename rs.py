@@ -11,11 +11,10 @@ logging.basicConfig(level=logging.INFO,
 np.seterr(all='raise')
 directory = 'ml-100k/'
 min_rating = 1
-max_rating = 21
+max_rating = 5
 rating_scale = max_rating - min_rating + 1
-user_size = 943
-# item_size = 1682
-item_size = 150
+ml_user_size = 943
+ml_item_size = 1682
 mode_branches = ['distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
 mode_choices = ['all'] + mode_branches
 dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
@@ -28,7 +27,7 @@ def get_ratings_from_ml_100k(dataset):
     if os.path.exists(filename):
         original_ratings = load(filename)
     else:
-        original_ratings = np.zeros(shape=(user_size, item_size))
+        original_ratings = np.zeros(shape=(ml_user_size, ml_item_size))
         with open(directory + dataset + '.base', 'r') as file:
             lines = file.readlines()
             for line in lines:
@@ -191,6 +190,7 @@ def nearest_neighbors_by_fix_number(candidates, user_id, web, n):
 
 
 def create_web(original_ratings, mode, threshold):
+    user_size = original_ratings.shape[0]
     web = np.zeros(shape=(user_size, user_size))
     for i in range(user_size):
         for j in range(user_size):
@@ -285,9 +285,6 @@ def main():
     args = parser.parse_args()
     dataset = args.dataset
     original_ratings = get_ratings_from_ml_100k(dataset)
-    global user_size, item_size
-    user_size = original_ratings.shape[0]
-    item_size = original_ratings.shape[1]
     mode = args.mode
     co_threshold = args.threshold
     if mode == 'all':
