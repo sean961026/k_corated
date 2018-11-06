@@ -57,7 +57,7 @@ class Cluster:
         for i in range(len(point_vec)):
             if self.centroid[i] == 1 and point_vec[i] == 0:
                 new += 1
-        return new * len(self.points)
+        return new * (len(self.points) + 1)
 
     def _corated_of(self, point):
         corated = 0
