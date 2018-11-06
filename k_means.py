@@ -34,9 +34,10 @@ class Cluster:
     centroid = None
     points = []
 
-    def __init__(self, original_ratings, centroid):
-        self.centroid = centroid
+    def __init__(self, original_ratings, centroid_index):
+        self.centroid = normalize(original_ratings[centroid_index, :])
         self.original_ratings = original_ratings
+        self.points.append(centroid_index)
 
     def _update_centroid(self, point):
         point_vec = normalize(self.original_ratings[point, :])
@@ -49,7 +50,7 @@ class Cluster:
         self._update_centroid(point)
 
     def distance_to(self, point):
-        return self._cost_of(point) / (self._corated_of(point) + 1)
+        return (self._cost_of(point) + 1) / (self._corated_of(point) + 1)
 
     def _cost_of(self, point):
         new = 0
@@ -57,7 +58,7 @@ class Cluster:
         for i in range(len(point_vec)):
             if self.centroid[i] == 1 and point_vec[i] == 0:
                 new += 1
-        return new * (len(self.points) + 1)
+        return new * len(self.points)
 
     def _corated_of(self, point):
         corated = 0
@@ -70,10 +71,11 @@ class Cluster:
 
 def k_means(original_ratings, k, mode):
     seeds = get_initial_seeds(original_ratings, k, mode)
-    clusters = [Cluster(original_ratings, normalize(original_ratings[seed, :])) for seed in seeds]
+    clusters = [Cluster(original_ratings, seed) for seed in seeds]
     for i in range(original_ratings.shape[0]):
-        distances = [cluster.distance_to(i) for cluster in clusters]
-        logging.info(distances)
-        which = distances.index(min(distances))
-        clusters[which].add_new_point(i)
+        if i not in seeds:
+            distances = [cluster.distance_to(i) for cluster in clusters]
+            which = distances.index(min(distances))
+            logging.info('point %s goes to %s cluster', i, which)
+            clusters[which].add_new_point(i)
     return clusters
