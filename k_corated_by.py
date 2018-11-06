@@ -52,14 +52,14 @@ def sort(ratings):
 def sort_through_clusters(ratings, clusters):
     user_size = ratings.shape[0]
     item_size = ratings.shape[1]
-    logging.info('%s %s', user_size, item_size)
     ret = np.zeros(shape=(user_size, item_size + 1))
     index_to_copy = 0
     for cluster in clusters:
         points = cluster.points
+        logging.info(points)
         for point in points:
             temp_vec = list(original_ratings[point, :])
-            temp_vec.append(point)
+            temp_vec.append(point + 1)
             ret[index_to_copy, :] = temp_vec
             index_to_copy += 1
     return ret
