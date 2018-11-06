@@ -52,6 +52,7 @@ def sort(ratings):
 def sort_through_clusters(ratings, clusters):
     user_size = ratings.shape[0]
     item_size = ratings.shape[1]
+    logging.info('%s %s', user_size, item_size)
     ret = np.zeros(user_size, item_size + 1)
     index_to_copy = 0
     for cluster in clusters:
