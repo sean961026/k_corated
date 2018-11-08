@@ -150,13 +150,13 @@ def de_attack_to_record(record_index):
     match = best_id == target_index
     enough = threshold >= eccen
     if match and enough:
-        case = 1
+        case = 0
     elif match and not enough:
-        case = 2
+        case = 1
     elif enough and not match:
-        case = 3
+        case = 2
     else:
-        case = 4
+        case = 3
     return case, scores, target_score
 
 
@@ -167,8 +167,8 @@ def analyze():
     for record_index in records_2_be_attacked:
         for i in range(10):
             case, scores, target_score = de_attack_to_record(record_index)
-            cases[case - 1] += 1
-            if case != 1:
+            cases[case] += 1
+            if case != 0:
                 failed_scores.append((scores, target_score))
     portions = [case / sum(cases) for case in cases]
     logging.info(portions)
@@ -286,6 +286,7 @@ def init():
     user_size = original_ratings.shape[0]
     item_size = original_ratings.shape[1]
     translator = get_id_translator(args.ratings)
+    logging.info(translator)
     correct = args.correct
     total = args.total
     eccen = args.eccen
