@@ -8,6 +8,7 @@ import numpy as np
 import argparse
 import os
 import matplotlib.pyplot as plt
+from k_means import normalize
 
 mode_choices = ['exp', 'indicate']
 sim_threshold = 0
@@ -160,7 +161,18 @@ def de_attack_to_record(record_index):
     return case, scores, target_score
 
 
+def num_of_ratings(ratings):
+    num = 0
+    lines = ratings.shape[0]
+    for line in range(lines):
+        record = ratings[line, :]
+        normalized = normalize(record)
+        num += sum(normalized)
+    return num
+
 def analyze():
+    logging.info('the number of ratings of original ratings', num_of_ratings(original_ratings))
+    logging.info('the number of ratings of attack ratings', num_of_ratings(attack_ratings))
     records_2_be_attacked = random.sample([i for i in range(user_size)], 90)
     failed_scores = []
     cases = [0] * 4
