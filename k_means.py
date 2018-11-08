@@ -93,6 +93,7 @@ def k_means_simple(original_ratings, k, mode):
 def k_means(original_ratings, k, mode):
     best_clusters = k_means_simple(original_ratings, k, mode)
     for i in range(100):
+        logging.info('k means for %d times', i)
         temp_clusters = k_means_simple(original_ratings, k, mode)
         if dis_of_clusters(best_clusters) > dis_of_clusters(temp_clusters):
             best_clusters = temp_clusters
