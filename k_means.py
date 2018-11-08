@@ -64,8 +64,22 @@ class Cluster:
                 corated += 1
         return corated
 
+    def dis_sum(self):
+        s = sum(self.centroid) * len(self.points)
+        t = 0
+        for point in self.points:
+            t += sum(normalize(self.original_ratings[point, :]))
+        return s - t
 
-def k_means(original_ratings, k, mode):
+
+def dis_of_clusters(clusters):
+    s = 0
+    for cluser in clusters:
+        s += cluser.dis_sum()
+    return s
+
+
+def k_means_simple(original_ratings, k, mode):
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(original_ratings, seed) for seed in seeds]
     for i in range(original_ratings.shape[0]):
@@ -73,9 +87,13 @@ def k_means(original_ratings, k, mode):
             distances = [cluster.distance_to(i) for cluster in clusters]
             which = distances.index(min(distances))
             clusters[which].add_new_point(i)
-    s = 0
-    for cluster in clusters:
-        logging.info('size of cluster is %s', len(cluster.points))
-        s += len(cluster.points)
-    logging.info('the sum is %s', s)
     return clusters
+
+
+def k_means(original_ratings, k, mode):
+    best_clusters = k_means_simple(original_ratings, k, mode)
+    for i in range(100):
+        temp_clusters = k_means_simple(original_ratings, k, mode)
+        if dis_of_clusters(best_clusters) > dis_of_clusters(temp_clusters):
+            best_clusters = temp_clusters
+    return best_clusters
