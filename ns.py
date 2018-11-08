@@ -167,7 +167,7 @@ def analyze():
     for record_index in records_2_be_attacked:
         for i in range(10):
             case, scores, target_score = de_attack_to_record(record_index)
-            cases[case] += 1
+            cases[case - 1] += 1
             if case != 1:
                 failed_scores.append((scores, target_score))
     portions = [case / sum(cases) for case in cases]
@@ -275,13 +275,10 @@ def init():
     parser.add_argument('-t', '--total', required=True, type=int)
     parser.add_argument('-c', '--correct', required=True, type=int)
     parser.add_argument('-e', '--eccen', type=float)
-    parser.add_argument('-n', type=int)
-    parser.add_argument('--threshold', type=int)
     parser.add_argument('-m,', '--mode', choices=mode_choices)
     parser.add_argument('-w', '--weight', choices=['equal', 'less'], default='less')
     args = parser.parse_args()
     weight_mode = args.weight
-    sim_threshold = args.threshold
     sim_mode = args.mode
     attack_ratings = load(args.ratings)
     dataset = extract_dataset_from_filename(args.ratings)
