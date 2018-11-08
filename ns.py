@@ -286,7 +286,6 @@ def init():
     user_size = original_ratings.shape[0]
     item_size = original_ratings.shape[1]
     translator = get_id_translator(args.ratings)
-    logging.info('%d %d', min(translator), max(translator))
     correct = args.correct
     total = args.total
     eccen = args.eccen
