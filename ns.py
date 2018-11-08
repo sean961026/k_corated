@@ -1,7 +1,6 @@
 from rs import rating_scale, supp_item, supp_user, load, extract_dataset_from_filename, get_ratings_name_from_dataset, \
     unknown_rating, min_rating, max_rating
 from k_corated_by import get_index_from_krating_file
-from dist import hellinger_distance, get_prop_dist_from_ratings
 import logging
 import math
 import random
@@ -127,16 +126,6 @@ def generate_auxs():
     return auxs
 
 
-def de_anonymization(scores):
-    data = analyze_scores(scores)
-    threshold = data['threshold']
-    if threshold < eccen:
-        return None
-    else:
-        best_id = scores.index(data['max1'])
-        return best_id
-
-
 def entropic_de(scores):
     data = analyze_scores(scores)
     std = data['std']
@@ -150,125 +139,133 @@ def entropic_de(scores):
         return [(0, i) for i in range(len(scores))]
 
 
-def de_attack_2_range(auxs, rg):
-    logging.info('attacking the ratings by best guess')
-    result = []
-    for i in rg:
-        aux = auxs[i]
-        scores = get_scores(aux)
-        ans = de_anonymization(scores)
-        threshold = analyze_scores(scores)['threshold']
-        if ans is None:
-            result.append(('no_match', threshold))
-        else:
-            if ans == i:
-                result.append(('match_success', threshold))
-            else:
-                result.append(('match_failure', threshold))
-    return result
+def de_attack_to_record(record_index):
+    aux = generate_aux(record_index)
+    target_index = o2k(record_index)
+    target_score = score(aux, attack_ratings[target_index, :])
+    scores = get_scores(aux)
+    data = analyze_scores(scores)
+    threshold = data['threshold']
+    best_id = scores.index(data['max1'])
+    match = best_id == target_index
+    enough = threshold >= eccen
+    if match and enough:
+        case = 1
+    elif match and not enough:
+        case = 2
+    elif enough and not match:
+        case = 3
+    else:
+        case = 4
+    return case, scores, target_score
 
 
-def en_attack_2_range(auxs, rg):
-    logging.info('attacking the ratings by distribution')
-    for i in rg:
-        aux = auxs[i]
-        scores = get_scores(aux)
-        dist = entropic_de(scores)
-        logging.info(sa2en_attack(i, scores, dist))
+def analyze():
+    records_2_be_attacked = random.sample([i for i in range(user_size)], 90)
+    failed_scores = []
+    cases = [0] * 4
+    for record_index in records_2_be_attacked:
+        for i in range(10):
+            case, scores, target_score = de_attack_to_record(record_index)
+            cases[case] += 1
+            if case != 1:
+                failed_scores.append((scores, target_score))
+    portions = [case / sum(cases) for case in cases]
+    logging.info(portions)
 
 
-def sa2de_all(result):
-    logging.info('analyzing the result of best guess')
-    success_list = []
-    no_match_list = []
-    wrong_match_list = []
-    thresholds = []
-    for i in range(len(result)):
-        threshold = result[i][1]
-        thresholds.append(threshold)
-        if result[i][0] == 'no_match':
-            no_match_list.append(i)
-        else:
-            if result[i][0] == 'match_failure':
-                wrong_match_list.append(i)
-            else:
-                success_list.append(i)
-
-    min_int_threshold = int(min(thresholds))
-    max_int_threshold = int(max(thresholds)) + 1
-    bins = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
-    plt.hist(thresholds, bins=bins)
-    plt.savefig('threshold.jpg')
-    return {'success_rate': len(success_list) / len(result), 'no_match_rate': len(no_match_list) / len(result),
-            'wrong_match_rate': len(wrong_match_list) / len(result),
-            'attack_size': len(result)}, no_match_list, success_list, wrong_match_list
-
-
-def candi_list(scores):
-    candidates = []
-    for i in range(len(scores)):
-        if scores[i] >= correct:
-            candidates.append(i)
-    return candidates
-
-
-def sa2en_attack(attackee, scores, dist):
-    global distance_pic_count
-    dist.sort(key=lambda x: x[0], reverse=True)
-
-    def percent2size(percent):
-        up_limit = len(dist)
-        while up_limit > 0:
-            temp = [dist[i][0] for i in range(up_limit)]
-            s2 = sum(temp)
-            s1 = s2 - temp.pop()
-            if s1 < percent and s2 >= percent:
-                return len(temp)
-            else:
-                up_limit -= 1
-        return 0
-
-    def size2propsum(size):
-        temp = [dist[i][0] for i in range(size)]
-        return sum(temp)
-
-    def top_group(size):
-        return [dist[i][1] for i in range(size)]
-
-    candi = candi_list(scores)
-    attackee_record = attack_ratings[attackee, :]
-    items_id = supp_user(attackee_record)
-    x = [i for i in range(len(items_id))]
-    y = []
-    for item_id in items_id:
-        rated_users = supp_item(attack_ratings[:, item_id])
-        global_ratings = [attack_ratings[user_id, item_id] for user_id in rated_users]
-        gp = get_prop_dist_from_ratings(global_ratings)
-        local_ratings = []
-        for candidate in candi:
-            r = attack_ratings[candidate, item_id]
-            if r != unknown_rating:
-                local_ratings.append(r)
-        lp = get_prop_dist_from_ratings(local_ratings)
-        y.append(hellinger_distance(gp, lp))
-    plt.figure()
-    plt.plot(x, y)
-    plt.savefig('dist_%s.jpg' % distance_pic_count)
-    distance_pic_count += 1
-    analysis_data = {'attackee': attackee, 'group10': top_group(10), 'top10': size2propsum(10), 'max_pro': dist[0][0],
-                     'candidates_size': len(candi), 'candi_prop': size2propsum(len(candi))}
-    return analysis_data
-
-
-def statistical_analysis(auxs):
-    if eccen:
-        result = de_attack_2_range(auxs, rg=range(user_size))
-        analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
-        logging.info(analysis_data)
-        logging.info('analyzing the result of distribution on those best-guess-failure cases')
-        wrong_list = no_match_list + wrong_match_list
-        wrong_list.sort(reverse=True)
-        en_attack_2_range(auxs, rg=[wrong_list[i] for i in range(5)])
+# def sa2de_all(result):
+#     logging.info('analyzing the result of best guess')
+#     success_list = []
+#     no_match_list = []
+#     wrong_match_list = []
+#     thresholds = []
+#     for i in range(len(result)):
+#         threshold = result[i][1]
+#         thresholds.append(threshold)
+#         if result[i][0] == 'no_match':
+#             no_match_list.append(i)
+#         else:
+#             if result[i][0] == 'match_failure':
+#                 wrong_match_list.append(i)
+#             else:
+#                 success_list.append(i)
+#
+#     min_int_threshold = int(min(thresholds))
+#     max_int_threshold = int(max(thresholds)) + 1
+#     bins = [i / 2 for i in range(min_int_threshold * 2, max_int_threshold * 2 + 1)]
+#     plt.hist(thresholds, bins=bins)
+#     plt.savefig('threshold.jpg')
+#     return {'success_rate': len(success_list) / len(result), 'no_match_rate': len(no_match_list) / len(result),
+#             'wrong_match_rate': len(wrong_match_list) / len(result),
+#             'attack_size': len(result)}, no_match_list, success_list, wrong_match_list
+#
+#
+# def candi_list(scores):
+#     candidates = []
+#     for i in range(len(scores)):
+#         if scores[i] >= correct:
+#             candidates.append(i)
+#     return candidates
+#
+#
+# def sa2en_attack(attackee, scores, dist):
+#     global distance_pic_count
+#     dist.sort(key=lambda x: x[0], reverse=True)
+#
+#     def percent2size(percent):
+#         up_limit = len(dist)
+#         while up_limit > 0:
+#             temp = [dist[i][0] for i in range(up_limit)]
+#             s2 = sum(temp)
+#             s1 = s2 - temp.pop()
+#             if s1 < percent and s2 >= percent:
+#                 return len(temp)
+#             else:
+#                 up_limit -= 1
+#         return 0
+#
+#     def size2propsum(size):
+#         temp = [dist[i][0] for i in range(size)]
+#         return sum(temp)
+#
+#     def top_group(size):
+#         return [dist[i][1] for i in range(size)]
+#
+#     candi = candi_list(scores)
+#     attackee_record = attack_ratings[attackee, :]
+#     items_id = supp_user(attackee_record)
+#     x = [i for i in range(len(items_id))]
+#     y = []
+#     for item_id in items_id:
+#         rated_users = supp_item(attack_ratings[:, item_id])
+#         global_ratings = [attack_ratings[user_id, item_id] for user_id in rated_users]
+#         gp = get_prop_dist_from_ratings(global_ratings)
+#         local_ratings = []
+#         for candidate in candi:
+#             r = attack_ratings[candidate, item_id]
+#             if r != unknown_rating:
+#                 local_ratings.append(r)
+#         lp = get_prop_dist_from_ratings(local_ratings)
+#         y.append(hellinger_distance(gp, lp))
+#     plt.figure()
+#     plt.plot(x, y)
+#     plt.savefig('dist_%s.jpg' % distance_pic_count)
+#     distance_pic_count += 1
+#     analysis_data = {'attackee': attackee, 'group10': top_group(10), 'top10': size2propsum(10), 'max_pro': dist[0][0],
+#                      'candidates_size': len(candi), 'candi_prop': size2propsum(len(candi))}
+#     return analysis_data
+#
+#
+# def statistical_analysis(auxs):
+#     if eccen:
+#         result = de_attack_2_range(auxs, rg=range(user_size))
+#         analysis_data, no_match_list, success_match_list, wrong_match_list = sa2de_all(result)
+#         logging.info(analysis_data)
+#         logging.info('analyzing the result of distribution on those best-guess-failure cases')
+#         wrong_list = no_match_list + wrong_match_list
+#         wrong_list.sort(reverse=True)
+#         en_attack_2_range(auxs, rg=[wrong_list[i] for i in range(5)])
 
 
 def init():
@@ -299,8 +296,7 @@ def init():
 
 def main():
     init()
-    auxs = generate_auxs()
-    statistical_analysis(auxs)
+    analyze()
 
 
 if __name__ == '__main__':
