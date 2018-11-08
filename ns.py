@@ -171,8 +171,8 @@ def num_of_ratings(ratings):
     return num
 
 def analyze():
-    logging.info('the number of ratings of original ratings', num_of_ratings(original_ratings))
-    logging.info('the number of ratings of attack ratings', num_of_ratings(attack_ratings))
+    logging.info('the number of ratings of original ratings %d', num_of_ratings(original_ratings))
+    logging.info('the number of ratings of attack ratings %d', num_of_ratings(attack_ratings))
     records_2_be_attacked = random.sample([i for i in range(user_size)], 90)
     failed_scores = []
     cases = [0] * 4
