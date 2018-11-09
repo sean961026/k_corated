@@ -38,7 +38,7 @@ class Cluster:
         self.points = []
 
     def update_centroid(self):
-        temp = [0] * Cluster.original_ratings.shape[0]
+        temp = [0] * Cluster.original_ratings.shape[1]
         for i in range(Cluster.original_ratings.shape[0]):
             for point in self.points:
                 temp[i] += Cluster.original_ratings[point, i]
