@@ -2,6 +2,7 @@ import random
 import numpy as np
 import logging
 
+
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
         seeds = get_initial_seeds_randomly(original_ratings, size)
@@ -30,45 +31,38 @@ def normalize(vec):
 
 
 class Cluster:
-    def __init__(self, original_ratings, centroid_index):
-        self.centroid = normalize(original_ratings[centroid_index, :])
-        self.original_ratings = original_ratings
-        self.points = [centroid_index]
+    original_ratings = None
 
-    def _update_centroid(self, point):
-        point_vec = normalize(self.original_ratings[point, :])
-        for i in range(len(point_vec)):
-            if self.centroid[i] == 0 and point_vec[i] == 1:
-                self.centroid[i] = 1
+    def __init__(self, centroid_index):
+        self.centroid = normalize(Cluster.original_ratings[centroid_index, :])
+        self.points = []
+
+    def update_centroid(self):
+        temp = [0] * Cluster.original_ratings.shape[0]
+        for i in range(Cluster.original_ratings.shape[0]):
+            for point in self.points:
+                temp[i] += Cluster.original_ratings[point, i]
+        self.centroid = normalize(temp)
+
+    def clear(self):
+        self.points.clear()
 
     def add_new_point(self, point):
         self.points.append(point)
-        self._update_centroid(point)
 
     def distance_to(self, point):
-        return (self._cost_of(point) + 1) / (self._corated_of(point) + 1)
-
-    def _cost_of(self, point):
-        new = 0
-        point_vec = normalize(self.original_ratings[point, :])
-        for i in range(len(point_vec)):
-            if self.centroid[i] == 1 and point_vec[i] == 0:
-                new += 1
-        return new * len(self.points)
-
-    def _corated_of(self, point):
+        point_vec = normalize(Cluster.original_ratings[point, :])
         corated = 0
-        point_vec = normalize(self.original_ratings[point, :])
         for i in range(len(point_vec)):
             if self.centroid[i] == 1 and point_vec[i] == 1:
                 corated += 1
-        return corated
+        return corated / (sum(self.centroid) + sum(point_vec) - corated)
 
     def dis_sum(self):
         s = sum(self.centroid) * len(self.points)
         t = 0
         for point in self.points:
-            t += sum(normalize(self.original_ratings[point, :]))
+            t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
 
@@ -79,30 +73,31 @@ def dis_of_clusters(clusters):
     return s
 
 
-def k_means_simple(original_ratings, k, mode):
-    all_points = [i for i in range(original_ratings.shape[0])]
-    seeds = get_initial_seeds(original_ratings, k, mode)
-    clusters = [Cluster(original_ratings, seed) for seed in seeds]
-    for seed in seeds:
-        all_points.remove(seed)
-    while len(all_points) != 0:
-        distances = []
+def k_means_iter_once(clusters):
+    point_size = Cluster.original_ratings.shape[0]
+    for point in range(point_size):
+        dis = []
         for cluster in clusters:
-            for point in all_points:
-                distances.append(cluster.distance_to(point))
-        index_of_min_distance = distances.index(min(distances))
-        index_of_point = index_of_min_distance % len(clusters)
-        index_of_cluster = index_of_min_distance // len(clusters)
-        clusters[index_of_cluster].add_new_point(all_points[index_of_point])
-        all_points.remove(all_points[index_of_point])
-    logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
-    return clusters
+            dis.append(cluster.distance_to(point))
+        min_cluster = dis.index(min(dis))
+        clusters[min_cluster].add_new_point(point)
+    for cluster in clusters:
+        cluster.update_centroid()
+
+
+def clear_all(clusters):
+    for cluster in clusters:
+        cluster.clear()
 
 
 def k_means(original_ratings, k, mode):
-    best_clusters = k_means_simple(original_ratings, k, mode)
-    for i in range(100):
-        temp_clusters = k_means_simple(original_ratings, k, mode)
-        if dis_of_clusters(best_clusters) > dis_of_clusters(temp_clusters):
-            best_clusters = temp_clusters
-    return best_clusters
+    Cluster.original_ratings = original_ratings
+    seeds = get_initial_seeds(original_ratings, k, mode)
+    clusters = [Cluster(seed) for seed in seeds]
+    for i in range(10):
+        k_means_iter_once(clusters)
+        logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
+        clear_all(clusters)
+    k_means_iter_once(clusters)
+    logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
+    return clusters
