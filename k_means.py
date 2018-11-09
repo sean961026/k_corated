@@ -89,7 +89,7 @@ def k_means_simple(original_ratings, k, mode):
         distances = []
         for cluster in clusters:
             for point in all_points:
-                distances.append(cluster.add_new_point(point))
+                distances.append(cluster.distance_to(point))
         index_of_min_distance = distances.index(min(distances))
         index_of_point = index_of_min_distance % len(clusters)
         index_of_cluster = index_of_min_distance // len(clusters)
