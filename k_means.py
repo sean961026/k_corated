@@ -56,7 +56,7 @@ class Cluster:
         for i in range(len(point_vec)):
             if self.centroid[i] == 1 and point_vec[i] == 1:
                 corated += 1
-        return corated / (sum(self.centroid) + sum(point_vec) - corated)
+        return -corated / (sum(self.centroid) + sum(point_vec) - corated)
 
     def dis_sum(self):
         s = sum(self.centroid) * len(self.points)
