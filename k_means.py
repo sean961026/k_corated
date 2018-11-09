@@ -86,11 +86,15 @@ def k_means_simple(original_ratings, k, mode):
     for seed in seeds:
         all_points.remove(seed)
     while len(all_points) != 0:
+        distances = []
         for cluster in clusters:
-            distances = [cluster.distance_to(point) for point in all_points]
-            which = all_points[distances.index(min(distances))]
-            cluster.add_new_point(which)
-            all_points.remove(which)
+            for point in all_points:
+                distances.append(cluster.add_new_point(point))
+        index_of_min_distance = distances.index(min(distances))
+        index_of_point = index_of_min_distance % len(clusters)
+        index_of_cluster = index_of_min_distance // len(clusters)
+        clusters[index_of_cluster].add_new_point(all_points[index_of_point])
+        all_points.remove(all_points[index_of_point])
     logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
     return clusters
 
