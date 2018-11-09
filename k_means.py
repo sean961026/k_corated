@@ -95,7 +95,6 @@ def k_means(original_ratings, k, mode):
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(10):
-        logging.info('first centroid %s', sum(clusters[0].centroid))
         k_means_iter_once(clusters)
         logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
         clear_all(clusters)
