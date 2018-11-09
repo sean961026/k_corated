@@ -80,20 +80,24 @@ def dis_of_clusters(clusters):
 
 
 def k_means_simple(original_ratings, k, mode):
+    all_points = [i for i in range(original_ratings.shape[0])]
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(original_ratings, seed) for seed in seeds]
-    for i in range(original_ratings.shape[0]):
-        if i not in seeds:
-            distances = [cluster.distance_to(i) for cluster in clusters]
+    for seed in seeds:
+        all_points.remove(seed)
+    while len(all_points) != 0:
+        for cluster in clusters:
+            distances = [cluster.distance_to(point) for point in all_points]
             which = distances.index(min(distances))
-            clusters[which].add_new_point(i)
+            cluster.add_new_point(which)
+            all_points.remove(which)
+    logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
     return clusters
 
 
 def k_means(original_ratings, k, mode):
     best_clusters = k_means_simple(original_ratings, k, mode)
     for i in range(100):
-        logging.info('k means for %d times', i)
         temp_clusters = k_means_simple(original_ratings, k, mode)
         if dis_of_clusters(best_clusters) > dis_of_clusters(temp_clusters):
             best_clusters = temp_clusters
