@@ -42,6 +42,7 @@ class Cluster:
         for i in range(Cluster.original_ratings.shape[1]):
             for point in self.points:
                 temp[i] += Cluster.original_ratings[point, i]
+        logging.info(temp.sort(reverse=True))
         self.centroid = normalize(temp)
 
     def clear(self):
