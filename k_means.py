@@ -36,17 +36,22 @@ class Cluster:
     def __init__(self, centroid_index):
         self.centroid = normalize(Cluster.original_ratings[centroid_index, :])
         self.points = []
+        self.corated = self.centroid
 
     def update_centroid(self):
         temp = [0] * Cluster.original_ratings.shape[1]
         for i in range(Cluster.original_ratings.shape[1]):
             for point in self.points:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
+        self.corated = normalize(temp)
         for i in range(len(temp)):
             if temp[i] in [1, 2]:
                 temp[i] = 0
         if sum(temp) == 0:
-            temp = Cluster.original_ratings[self.points[random.randint(0, len(self.points) - 1)], :]
+            if len(self.points) != 0:
+                temp = Cluster.original_ratings[self.points[random.randint(0, len(self.points) - 1)], :]
+            else:
+                temp = Cluster.original_ratings[random.randint(0, Cluster.original_ratings.shape[0] - 1), :]
         self.centroid = normalize(temp)
 
     def clear(self):
@@ -64,7 +69,7 @@ class Cluster:
         return -corated / (sum(self.centroid) + sum(point_vec) - corated)
 
     def dis_sum(self):
-        s = sum(self.centroid) * len(self.points)
+        s = sum(self.corated) * len(self.points)
         t = 0
         for point in self.points:
             t += sum(normalize(Cluster.original_ratings[point, :]))
