@@ -42,9 +42,10 @@ class Cluster:
         for i in range(Cluster.original_ratings.shape[1]):
             for point in self.points:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
+        for i in range(len(temp)):
+            if temp[i] in [1, 2]:
+                temp[i] = 0
         self.centroid = normalize(temp)
-        temp.sort(reverse=True)
-        logging.info(temp)
 
     def clear(self):
         self.points.clear()
