@@ -46,7 +46,7 @@ class Cluster:
             if temp[i] in [1, 2]:
                 temp[i] = 0
         if sum(temp) == 0:
-            temp = self.points[random.randint(0, len(self.points))]
+            temp = Cluster.original_ratings[self.points[random.randint(0, len(self.points) - 1)], :]
         self.centroid = normalize(temp)
 
     def clear(self):
