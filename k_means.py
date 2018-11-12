@@ -44,8 +44,10 @@ class Cluster:
             for point in self.points:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         self.corated = normalize(temp)
+        p = sorted(temp, reverse=True)
+        logging.info([p[i] for i in range(10)])
         for i in range(len(temp)):
-            if temp[i] in [1, 2, 3, 4, 5]:
+            if temp[i] in [1, 2]:
                 temp[i] = 0
         if sum(temp) == 0:
             if len(self.points) != 0:
