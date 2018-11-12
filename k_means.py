@@ -39,22 +39,17 @@ class Cluster:
         self.corated = self.centroid
 
     def update_centroid(self):
+        size = len(self.centroid)
         temp = [0] * Cluster.original_ratings.shape[1]
         for i in range(Cluster.original_ratings.shape[1]):
             for point in self.points:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         self.corated = normalize(temp)
-        p = sorted(temp, reverse=True)
-        logging.info('%s:%s:%s:%s', len(self.points), int(self.cluster_degree()), sum(self.corated),
-                     [p[i] for i in range(10)])
-        for i in range(len(temp)):
-            if temp[i] in [1, 2]:
+        sorted_temp = sorted(temp, reverse=True)
+        top_temp = [sorted_temp[i] for i in range(size)]
+        for i in range(Cluster.original_ratings.shape[1]):
+            if temp[i] not in top_temp:
                 temp[i] = 0
-        if sum(temp) == 0:
-            if len(self.points) != 0:
-                temp = Cluster.original_ratings[self.points[random.randint(0, len(self.points) - 1)], :]
-            else:
-                temp = Cluster.original_ratings[random.randint(0, Cluster.original_ratings.shape[0] - 1), :]
         self.centroid = normalize(temp)
 
     def clear(self):
@@ -77,9 +72,6 @@ class Cluster:
         for point in self.points:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
-
-    def cluster_degree(self):
-        return self.dis_sum() / (len(self.points) + 1)
 
 
 def dis_of_clusters(clusters):
