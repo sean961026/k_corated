@@ -47,8 +47,9 @@ class Cluster:
         self.corated = normalize(temp)
         sorted_temp = sorted(temp, reverse=True)
         top_temp = [sorted_temp[i] for i in range(size)]
+        top_index = [temp.index(i) for i in top_temp]
         for i in range(Cluster.original_ratings.shape[1]):
-            if temp[i] not in top_temp:
+            if i not in top_index:
                 temp[i] = 0
         self.centroid = normalize(temp)
 
