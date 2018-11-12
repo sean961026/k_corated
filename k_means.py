@@ -52,7 +52,6 @@ class Cluster:
         for i in range(Cluster.original_ratings.shape[1]):
             if i not in top_index:
                 temp[i] = 0
-        self.info()
         self.centroid = normalize(temp)
 
     def clear(self):
@@ -76,26 +75,6 @@ class Cluster:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
-    def info(self):
-        size = len(self.centroid)
-
-        def top_n_contribution(n):
-            temp = [0] * Cluster.original_ratings.shape[1]
-            for i in range(Cluster.original_ratings.shape[1]):
-                for point in self.points:
-                    temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
-            zip_temp = [(temp[i], i) for i in range(len(temp))]
-            sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
-            top_temp = [sorted_temp[i] for i in range(n)]
-            s = 0
-            for times, index in top_temp:
-                s += times
-            logging.info('top %d contribution for dis:%s', n, n * len(self.points) - s)
-
-        top_n_contribution(size)
-        top_n_contribution(int(len(self.corated) * 0.9))
-        top_n_contribution(int(len(self.corated) * 0.8))
-        logging.info('dis:%d', self.dis_sum())
 
 
 def dis_of_clusters(clusters):
