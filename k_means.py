@@ -45,7 +45,7 @@ class Cluster:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         self.corated = normalize(temp)
         for i in range(len(temp)):
-            if temp[i] in [1, 2]:
+            if temp[i] in [1, 2, 3, 4, 5]:
                 temp[i] = 0
         if sum(temp) == 0:
             if len(self.points) != 0:
