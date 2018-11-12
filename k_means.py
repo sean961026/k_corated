@@ -81,6 +81,32 @@ class Cluster:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
+    def new_dis(self):
+        n = sum(self.centroid)
+        temp = self._get_items_sum()
+        zip_temp = [(temp[i], i) for i in range(len(temp))]
+        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+        top_temp = [sorted_temp[i] for i in range(n)]
+        top_index = [z[1] for z in top_temp]
+        s = 0
+        for index in top_index:
+            s += temp[index]
+        all_s = n * len(self.points)
+        return all_s - s
+
+    def cost(self):
+        n = sum(self.centroid)
+        temp = self._get_items_sum()
+        zip_temp = [(temp[i], i) for i in range(len(temp))]
+        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+        top_temp = [sorted_temp[i] for i in range(n)]
+        top_index = [z[1] for z in top_temp]
+        cost = 0
+        for i in range(len(temp)):
+            if i not in top_index:
+                cost += temp[i]
+        return cost
+
     def info(self):
         point_size = len(self.points)
         dis = self.dis_sum()
@@ -113,8 +139,17 @@ class Cluster:
 
 def dis_of_clusters(clusters):
     s = 0
-    for cluser in clusters:
-        s += cluser.dis_sum()
+    for cluster in clusters:
+        # s += cluster.dis_sum()
+        s += cluster.new_dis()
+    return s
+
+
+def cost_of_clusters(clusters):
+    s = 0
+    for cluster in clusters:
+        # s += cluster.dis_sum()
+        s += cluster.cost()
     return s
 
 
@@ -126,8 +161,6 @@ def k_means_iter_once(clusters):
             dis.append(cluster.distance_to(point))
         min_cluster = dis.index(min(dis))
         clusters[min_cluster].add_new_point(point)
-    for cluster in clusters:
-        cluster.info()
     for cluster in clusters:
         cluster.update_centroid()
 
@@ -144,6 +177,7 @@ def k_means(original_ratings, k, mode):
     for i in range(10):
         k_means_iter_once(clusters)
         logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
+        logging.info('the cost of such clusters is %d', cost_of_clusters(clusters))
         clear_all(clusters)
     k_means_iter_once(clusters)
     logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
