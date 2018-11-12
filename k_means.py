@@ -36,15 +36,10 @@ class Cluster:
     def __init__(self, centroid_index):
         self.centroid = normalize(Cluster.original_ratings[centroid_index, :])
         self.points = []
-        self.corated = self.centroid
 
     def update_centroid(self):
         size = len(self.centroid)
-        temp = [0] * Cluster.original_ratings.shape[1]
-        for i in range(Cluster.original_ratings.shape[1]):
-            for point in self.points:
-                temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
-        self.corated = normalize(temp)
+        temp = self._get_items_sum()
         zip_temp = [(temp[i], i) for i in range(len(temp))]
         sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
         top_temp = [sorted_temp[i] for i in range(size)]
@@ -56,6 +51,17 @@ class Cluster:
 
     def clear(self):
         self.points.clear()
+
+    def _get_items_sum(self):
+        temp = [0] * Cluster.original_ratings.shape[1]
+        for i in range(Cluster.original_ratings.shape[1]):
+            for point in self.points:
+                temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
+        return temp
+
+    def _get_corated(self):
+        temp = self._get_items_sum()
+        return normalize(temp)
 
     def add_new_point(self, point):
         self.points.append(point)
@@ -69,12 +75,34 @@ class Cluster:
         return -corated / (sum(self.centroid) + sum(point_vec) - corated)
 
     def dis_sum(self):
-        s = sum(self.corated) * len(self.points)
+        s = sum(self._get_corated()) * len(self.points)
         t = 0
         for point in self.points:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
+    def info(self):
+        size = len(self.points)
+        dis = self.dis_sum()
+        temp = self._get_items_sum()
+        zip_temp = [(temp[i], i) for i in range(len(temp))]
+        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+
+        def top_n_contribution(n):
+            top_temp = [sorted_temp[i] for i in range(n)]
+            top_index = [z[1] for z in top_temp]
+            s = 0
+            for index in top_index:
+                s += temp[index]
+            all_s = len(top_index) * len(self.points)
+            return all_s - s
+
+        centroid_contribution = top_n_contribution(len(self.centroid))
+        nine_contribution = top_n_contribution(int(len(self._get_corated()) * 0.9))
+        eight_contribution = top_n_contribution(int(len(self._get_corated()) * 0.9))
+        info = {'size': size, 'dis': dis, 'centroid_portion': centroid_contribution, '90%_portion': nine_contribution,
+                '80%_portion': eight_contribution}
+        logging.info(info)
 
 
 def dis_of_clusters(clusters):
@@ -107,6 +135,8 @@ def k_means(original_ratings, k, mode):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(10):
         k_means_iter_once(clusters)
+        for cluster in clusters:
+            cluster.info()
         logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
         clear_all(clusters)
     k_means_iter_once(clusters)
