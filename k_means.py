@@ -123,6 +123,8 @@ def k_means_iter_once(clusters):
         min_cluster = dis.index(min(dis))
         clusters[min_cluster].add_new_point(point)
     for cluster in clusters:
+        cluster.info()
+    for cluster in clusters:
         cluster.update_centroid()
 
 
@@ -137,8 +139,6 @@ def k_means(original_ratings, k, mode):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(10):
         k_means_iter_once(clusters)
-        for cluster in clusters:
-            cluster.info()
         logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
         clear_all(clusters)
     k_means_iter_once(clusters)
