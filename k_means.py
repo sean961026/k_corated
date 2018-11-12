@@ -101,7 +101,7 @@ class Cluster:
         centroid_contribution = top_n_contribution(sum(self.centroid))
         nine_contribution = top_n_contribution(int(sum(corated) * 0.9))
         eight_contribution = top_n_contribution(int(sum(corated) * 0.8))
-        info = {'point_size': point_size, 'centroid_size': len(self.centroid), 'corated_size': len(corated), 'dis': dis,
+        info = {'point_size': point_size, 'centroid_size': sum(self.centroid), 'corated_size': sum(corated), 'dis': dis,
                 'centroid_portion': centroid_contribution, '90%_portion': nine_contribution,
                 '80%_portion': eight_contribution}
         logging.info(info)
