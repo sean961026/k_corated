@@ -82,8 +82,9 @@ class Cluster:
         return s - t
 
     def info(self):
-        size = len(self.points)
+        point_size = len(self.points)
         dis = self.dis_sum()
+        corated = self._get_corated()
         temp = self._get_items_sum()
         zip_temp = [(temp[i], i) for i in range(len(temp))]
         sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
@@ -94,13 +95,14 @@ class Cluster:
             s = 0
             for index in top_index:
                 s += temp[index]
-            all_s = len(top_index) * len(self.points)
+            all_s = n * len(self.points)
             return all_s - s
 
         centroid_contribution = top_n_contribution(len(self.centroid))
-        nine_contribution = top_n_contribution(int(len(self._get_corated()) * 0.9))
-        eight_contribution = top_n_contribution(int(len(self._get_corated()) * 0.9))
-        info = {'size': size, 'dis': dis, 'centroid_portion': centroid_contribution, '90%_portion': nine_contribution,
+        nine_contribution = top_n_contribution(int(len(corated) * 0.9))
+        eight_contribution = top_n_contribution(int(len(corated) * 0.8))
+        info = {'point_size': point_size, 'centroid_size': len(self.centroid), 'corated_size': len(corated), 'dis': dis,
+                'centroid_portion': centroid_contribution, '90%_portion': nine_contribution,
                 '80%_portion': eight_contribution}
         logging.info(info)
 
