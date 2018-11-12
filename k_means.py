@@ -45,7 +45,8 @@ class Cluster:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         self.corated = normalize(temp)
         p = sorted(temp, reverse=True)
-        logging.info('%s:%s:%s', len(self.points), int(self.cluster_degree()), [p[i] for i in range(10)])
+        logging.info('%s:%s:%s:%s', len(self.points), int(self.cluster_degree()), sum(self.corated),
+                     [p[i] for i in range(10)])
         for i in range(len(temp)):
             if temp[i] in [1, 2]:
                 temp[i] = 0
