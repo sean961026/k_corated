@@ -45,7 +45,7 @@ class Cluster:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         self.corated = normalize(temp)
         p = sorted(temp, reverse=True)
-        logging.info([p[i] for i in range(10)])
+        logging.info('%s:%s', self.cluster_degree(), [p[i] for i in range(10)])
         for i in range(len(temp)):
             if temp[i] in [1, 2]:
                 temp[i] = 0
@@ -76,6 +76,9 @@ class Cluster:
         for point in self.points:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
+
+    def cluster_degree(self):
+        return self.dis_sum() / (len(self.points) + 1)
 
 
 def dis_of_clusters(clusters):
