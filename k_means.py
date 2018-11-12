@@ -45,9 +45,10 @@ class Cluster:
             for point in self.points:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         self.corated = normalize(temp)
-        sorted_temp = sorted(temp, reverse=True)
+        zip_temp = [(temp[i], i) for i in range(len(temp))]
+        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
         top_temp = [sorted_temp[i] for i in range(size)]
-        top_index = [temp.index(i) for i in top_temp]
+        top_index = [z[1] for z in top_temp]
         for i in range(Cluster.original_ratings.shape[1]):
             if i not in top_index:
                 temp[i] = 0
