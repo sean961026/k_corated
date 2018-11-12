@@ -52,6 +52,7 @@ class Cluster:
         for i in range(Cluster.original_ratings.shape[1]):
             if i not in top_index:
                 temp[i] = 0
+        self.info()
         self.centroid = normalize(temp)
 
     def clear(self):
@@ -127,8 +128,6 @@ def k_means(original_ratings, k, mode):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(10):
         k_means_iter_once(clusters)
-        for cluster in clusters:
-            cluster.info()
         logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
         clear_all(clusters)
     k_means_iter_once(clusters)
