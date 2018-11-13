@@ -7,7 +7,6 @@ import random
 import numpy as np
 import argparse
 import os
-import matplotlib.pyplot as plt
 from k_means import normalize
 
 mode_choices = ['exp', 'indicate']

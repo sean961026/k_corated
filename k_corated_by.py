@@ -4,7 +4,7 @@ from functools import cmp_to_key
 import numpy as np
 import logging
 import argparse
-from k_means import k_means, load_clusters
+from k_means import load_clusters
 
 original_ratings = None
 sorted_ratings = None
@@ -105,9 +105,10 @@ def k_corating_all(sorted_ratings, k):
 def corating_all_through_clusters(sorted_ratings, clusters):
     start = 0
     for cluster in clusters:
-        myslice = slice(start, start + len(cluster.points))
-        start += len(cluster.points)
-        k_corating_slice(sorted_ratings, myslice, cluster.items_to_keep())
+        if len(cluster.points) != 0:
+            myslice = slice(start, start + len(cluster.points))
+            start += len(cluster.points)
+            k_corating_slice(sorted_ratings, myslice, cluster.items_to_keep())
     index_translator = sorted_ratings[:, -1]
     k_corated = np.delete(sorted_ratings, sorted_ratings.shape[1] - 1, 1)
     return k_corated, index_translator
@@ -170,7 +171,6 @@ def main():
     k = args.k
     suffix = args.suffix
     cluster_flag = args.cluster
-    cluster_mode = args.mode
     init(data_set, threshold, top)
 
     def k_corated(webname):
