@@ -103,6 +103,7 @@ def k_corating_all(copy_sorted_ratings, k):
 
 
 def corating_all_through_clusters(copy_sorted_ratings, clusters):
+    dump('sorted.csv', copy_sorted_ratings)
     start = 0
     for cluster in clusters:
         if len(cluster.points) != 0:
@@ -110,7 +111,6 @@ def corating_all_through_clusters(copy_sorted_ratings, clusters):
             start += len(cluster.points)
             k_corating_slice(copy_sorted_ratings, myslice, cluster.items_to_keep())
     index_translator = copy_sorted_ratings[:, -1]
-    logging.info(index_translator)
     k_corated = np.delete(copy_sorted_ratings, copy_sorted_ratings.shape[1] - 1, 1)
     return k_corated, index_translator
 
@@ -188,7 +188,6 @@ def main():
         index_file_name = get_k_corated_index_by_attr(data_set, k, webname, threshold, top)
         dump(k_file_name, k_corated)
         dump(index_file_name, index_translator)
-        dump('sorted.csv', sorted_ratings)
 
     if web_name != 'all':
         k_corated(web_name)
