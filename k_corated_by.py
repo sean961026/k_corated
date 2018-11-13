@@ -157,7 +157,7 @@ def main():
     parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
     parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
     parser.add_argument('-w', '--web', required=True)
-    parser.add_argument('-k', required=True, type=int)
+    parser.add_argument('-k', type=int)
     parser.add_argument('-s', '--suffix')
     parser.add_argument('-t', '--threshold')
     parser.add_argument('--top', type=int)
@@ -187,6 +187,7 @@ def main():
         index_file_name = get_k_corated_index_by_attr(data_set, k, webname, threshold, top)
         dump(k_file_name, k_corated)
         dump(index_file_name, index_translator)
+        dump('sorted.csv', sorted_ratings)
 
     if web_name != 'all':
         k_corated(web_name)
