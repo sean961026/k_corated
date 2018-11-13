@@ -110,6 +110,7 @@ def corating_all_through_clusters(copy_sorted_ratings, clusters):
             start += len(cluster.points)
             k_corating_slice(copy_sorted_ratings, myslice, cluster.items_to_keep())
     index_translator = copy_sorted_ratings[:, -1]
+    logging.info(index_translator)
     k_corated = np.delete(copy_sorted_ratings, copy_sorted_ratings.shape[1] - 1, 1)
     return k_corated, index_translator
 
