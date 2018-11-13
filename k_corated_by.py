@@ -115,7 +115,7 @@ def corating_all_through_clusters(sorted_ratings, clusters):
 
 
 def init(dataset, threshold, top):
-    global original_ratings, neighbor_fun, neighbor_para, sorted_ratings
+    global original_ratings, neighbor_fun, neighbor_para
     original_ratings = load(get_ratings_name_from_dataset(dataset))
     if threshold and top is None:
         neighbor_fun = neareast_neighbors_by_threshold
