@@ -50,7 +50,7 @@ def item_weight(item_id):
     if weight_mode == 'equal':
         return 1
     elif weight_mode == 'less':
-        return 1 / len(supp_item(attack_ratings[:, item_id]))
+        return 1 / (1 + len(supp_item(attack_ratings[:, item_id])))
     else:
         raise ValueError
 
