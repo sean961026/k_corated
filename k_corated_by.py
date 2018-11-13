@@ -107,7 +107,7 @@ def corating_all_through_clusters(sorted_ratings, clusters):
     for cluster in clusters:
         myslice = slice(start, start + len(cluster.points))
         start += len(cluster.points)
-        k_corating_slice(sorted_ratings, myslice)
+        k_corating_slice(sorted_ratings, myslice, cluster.centroid)
     index_translator = sorted_ratings[:, -1]
     k_corated = np.delete(sorted_ratings, sorted_ratings.shape[1] - 1, 1)
     return k_corated, index_translator
