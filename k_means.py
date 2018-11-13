@@ -237,7 +237,7 @@ def k_means(original_ratings, k, mode):
 def dump_clusters(clusters):
     file = open('best_clusters.txt', 'w')
     for cluster in clusters:
-        print('%s:%s' % (cluster.centroid, cluster.points), file=file)
+        print('%d:%s\n' % (sum(cluster.centroid), cluster.points), file=file)
     file.close()
 
 
