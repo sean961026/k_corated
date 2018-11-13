@@ -107,6 +107,12 @@ class Cluster:
                 cost += temp[i]
         return cost
 
+    def copy(self):
+        ins = Cluster(0)
+        ins.centroid = self.centroid
+        ins.points = self.points.copy()
+        return ins
+
     def info(self):
         point_size = len(self.points)
         dis = self.dis_sum()
@@ -138,18 +144,23 @@ class Cluster:
 
 
 def dis_of_clusters(clusters):
-    s = 0
-    for cluster in clusters:
-        # s += cluster.dis_sum()
-        s += cluster.new_dis()
-    return s
+    add = add_of_clusters(clusters)
+    delete = delete_of_clusters(clusters)
+    return add + 10 * delete
 
 
-def cost_of_clusters(clusters):
+def delete_of_clusters(clusters):
     s = 0
     for cluster in clusters:
         # s += cluster.dis_sum()
         s += cluster.cost()
+    return s
+
+
+def add_of_clusters(clusters):
+    s = 0
+    for cluster in clusters:
+        s += cluster.new_dis()
     return s
 
 
@@ -161,8 +172,6 @@ def k_means_iter_once(clusters):
             dis.append(cluster.distance_to(point))
         min_cluster = dis.index(min(dis))
         clusters[min_cluster].add_new_point(point)
-    logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
-    logging.info('the cost of such clusters is %d', cost_of_clusters(clusters))
     for cluster in clusters:
         cluster.update_centroid()
 
@@ -172,13 +181,39 @@ def clear_all(clusters):
         cluster.clear()
 
 
+def copy_all(clusters):
+    cp = []
+    for cluster in clusters:
+        single_cp = cluster.copy()
+        cp.append(single_cp)
+    return cp
+
+
 def k_means(original_ratings, k, mode):
     Cluster.original_ratings = original_ratings
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
+    best_clusters = None
     for i in range(10):
         k_means_iter_once(clusters)
+        if best_clusters is None:
+            best_clusters = copy_all(clusters)
+        else:
+            temp = copy_all(clusters)
+            dis_of_temp = dis_of_clusters(temp)
+            dis_of_best = dis_of_clusters(best_clusters)
+            best_clusters = temp if dis_of_temp < dis_of_best else best_clusters
+        logging.info('add:%s,delete:%s,dis:%s', add_of_clusters(clusters), delete_of_clusters(clusters),
+                     dis_of_clusters(clusters))
         clear_all(clusters)
     k_means_iter_once(clusters)
-    logging.info('the dis of such clusters is %d', dis_of_clusters(clusters))
-    return clusters
+    if best_clusters is None:
+        best_clusters = copy_all(clusters)
+    else:
+        temp = copy_all(clusters)
+        dis_of_temp = dis_of_clusters(temp)
+        dis_of_best = dis_of_clusters(best_clusters)
+        best_clusters = temp if dis_of_temp < dis_of_best else best_clusters
+    logging.info('add_of_best:%s,delete_of_best:%s,dis_of_best:%s', add_of_clusters(best_clusters),
+                 delete_of_clusters(best_clusters), dis_of_clusters(best_clusters))
+    return best_clusters

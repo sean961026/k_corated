@@ -64,17 +64,29 @@ def sort_through_clusters(ratings, clusters):
     return ret
 
 
-def k_corating_slice(sorted_ratings, myslice):  # [start,end)
+def k_corating_slice(sorted_ratings, myslice, centroid=None):  # [start,end)
     logging.info('k corating slice(%s,%s)', myslice.start, myslice.stop)
     part_ratings = sorted_ratings[myslice, :]
     items_need_to_rate = set()
     for record in part_ratings:
         items_need_to_rate = items_need_to_rate.union(supp_user(record))
-    for item_id in items_need_to_rate:
-        for record in part_ratings:
-            if record[item_id] == unknown_rating:
-                record[item_id] = round(
-                    pd_rating(original_ratings, int(record[-1] - 1), item_id, web, neighbor_fun, neighbor_para)[0])
+    if centroid is None:
+        for item_id in items_need_to_rate:
+            for record in part_ratings:
+                if record[item_id] == unknown_rating:
+                    record[item_id] = round(
+                        pd_rating(original_ratings, int(record[-1] - 1), item_id, web, neighbor_fun, neighbor_para)[0])
+    else:
+        for item_id in items_need_to_rate:
+            if centroid[item_id] != 1:
+                for record in part_ratings:
+                    record[item_id] = unknown_rating
+            else:
+                for record in part_ratings:
+                    if record[item_id] == unknown_rating:
+                        record[item_id] = round(
+                            pd_rating(original_ratings, int(record[-1] - 1), item_id, web, neighbor_fun, neighbor_para)[
+                                0])
 
 
 def k_corating_all(sorted_ratings, k):
