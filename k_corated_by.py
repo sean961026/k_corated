@@ -103,14 +103,13 @@ def k_corating_all(copy_sorted_ratings, k):
 
 
 def corating_all_through_clusters(copy_sorted_ratings, clusters):
-    dump('sorted.csv', copy_sorted_ratings)
+    index_translator = copy_sorted_ratings[:, -1].copy()
     start = 0
     for cluster in clusters:
         if len(cluster.points) != 0:
             myslice = slice(start, start + len(cluster.points))
             start += len(cluster.points)
             k_corating_slice(copy_sorted_ratings, myslice, cluster.items_to_keep())
-    index_translator = copy_sorted_ratings[:, -1]
     k_corated = np.delete(copy_sorted_ratings, copy_sorted_ratings.shape[1] - 1, 1)
     return k_corated, index_translator
 
