@@ -1,6 +1,8 @@
 import random
 import numpy as np
 import logging
+import argparse
+from rs import get_ratings_name_from_dataset, load
 
 
 def get_initial_seeds(original_ratings, size, mode):
@@ -38,16 +40,17 @@ class Cluster:
         self.points = []
 
     def update_centroid(self):
-        size = len(self.centroid)
-        temp = self._get_items_sum()
-        zip_temp = [(temp[i], i) for i in range(len(temp))]
-        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
-        top_temp = [sorted_temp[i] for i in range(size)]
-        top_index = [z[1] for z in top_temp]
-        for i in range(Cluster.original_ratings.shape[1]):
-            if i not in top_index:
-                temp[i] = 0
-        self.centroid = normalize(temp)
+        if len(self.points):
+            size = len(self.centroid)
+            temp = self._get_items_sum()
+            zip_temp = [(temp[i], i) for i in range(len(temp))]
+            sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+            top_temp = [sorted_temp[i] for i in range(size)]
+            top_index = [z[1] for z in top_temp]
+            for i in range(Cluster.original_ratings.shape[1]):
+                if i not in top_index:
+                    temp[i] = 0
+            self.centroid = normalize(temp)
 
     def clear(self):
         self.points.clear()
@@ -229,3 +232,20 @@ def k_means(original_ratings, k, mode):
     logging.info('add_of_best:%s,delete_of_best:%s,dis_of_best:%s', add_of_clusters(best_clusters),
                  delete_of_clusters(best_clusters), dis_of_clusters(best_clusters))
     return best_clusters
+
+
+def dump_clusters(clusters):
+    file = open('best_clusters.txt', 'w')
+    for cluster in clusters:
+        print('%s:%s' % (cluster.centroid, cluster.points), file=file)
+    file.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
+    parser.add_argument('-d', '--database', required=True)
+    parser.add_argument('-k', type=int, required=True)
+    parser.add_argument('-m', '--mode', required=True)
+    args = parser.parse_args()
+    best_clusters = k_means(load(get_ratings_name_from_dataset(args.database)), args.k, args.mode)
+    dump_clusters(best_clusters)
