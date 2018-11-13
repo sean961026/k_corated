@@ -152,7 +152,6 @@ def dis_of_clusters(clusters):
 def delete_of_clusters(clusters):
     s = 0
     for cluster in clusters:
-        # s += cluster.dis_sum()
         s += cluster.cost()
     return s
 
@@ -172,6 +171,9 @@ def k_means_iter_once(clusters):
             dis.append(cluster.distance_to(point))
         min_cluster = dis.index(min(dis))
         clusters[min_cluster].add_new_point(point)
+
+
+def update_all(clusters):
     for cluster in clusters:
         cluster.update_centroid()
 
@@ -205,6 +207,7 @@ def k_means(original_ratings, k, mode):
             best_clusters = temp if dis_of_temp < dis_of_best else best_clusters
         logging.info('add:%s,delete:%s,dis:%s', add_of_clusters(clusters), delete_of_clusters(clusters),
                      dis_of_clusters(clusters))
+        update_all(clusters)
         clear_all(clusters)
     k_means_iter_once(clusters)
     if best_clusters is None:
