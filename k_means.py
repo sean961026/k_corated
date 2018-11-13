@@ -216,30 +216,21 @@ def k_means(original_ratings, k, mode):
             temp = copy_all(clusters)
             dis_of_temp = dis_of_clusters(temp)
             dis_of_best = dis_of_clusters(best_clusters)
-            best_clusters = temp if dis_of_temp < dis_of_best else best_clusters
+            if dis_of_temp < dis_of_best:
+                best_clusters = temp
+            else:
+                return best_clusters
         logging.info('add:%s,delete:%s,dis:%s', add_of_clusters(clusters), delete_of_clusters(clusters),
                      dis_of_clusters(clusters))
         update_all(clusters)
         clear_all(clusters)
-    k_means_iter_once(clusters)
-    if best_clusters is None:
-        best_clusters = copy_all(clusters)
-    else:
-        temp = copy_all(clusters)
-        dis_of_temp = dis_of_clusters(temp)
-        dis_of_best = dis_of_clusters(best_clusters)
-        best_clusters = temp if dis_of_temp < dis_of_best else best_clusters
-    logging.info('add:%s,delete:%s,dis:%s', add_of_clusters(clusters), delete_of_clusters(clusters),
-                 dis_of_clusters(clusters))
-    logging.info('add_of_best:%s,delete_of_best:%s,dis_of_best:%s', add_of_clusters(best_clusters),
-                 delete_of_clusters(best_clusters), dis_of_clusters(best_clusters))
     return best_clusters
 
 
 def dump_clusters(clusters):
     with open('best_clusters.txt', 'w') as file:
         for cluster in clusters:
-            file.write('%d:%s\n' % (sum(cluster.centroid), cluster.points))
+            file.write('%d:%s' % (sum(cluster.centroid), cluster.points) + '\n')
 
 
 def load_clusters(original_ratings):
@@ -252,7 +243,7 @@ def load_clusters(original_ratings):
             cen_sum = int(cen_sum)
             points = eval(points)
             cluster = Cluster(0)
-            cluster.centroid = [1] * cen_sum
+            cluster.centroid = [cen_sum]
             cluster.points = points
             clusters.append(cluster)
     return clusters

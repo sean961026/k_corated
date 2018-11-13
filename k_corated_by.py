@@ -4,7 +4,7 @@ from functools import cmp_to_key
 import numpy as np
 import logging
 import argparse
-from k_means import k_means
+from k_means import k_means, load_clusters
 
 original_ratings = None
 sorted_ratings = None
@@ -177,7 +177,7 @@ def main():
         global web, sorted_ratings, original_ratings
         web = load(webname)
         if cluster_flag:
-            clusters = k_means(original_ratings, k, cluster_mode)
+            clusters = load_clusters(original_ratings)
             sorted_ratings = sort_through_clusters(original_ratings, clusters)
             k_corated, index_translator = corating_all_through_clusters(sorted_ratings.copy(), clusters)
         else:
