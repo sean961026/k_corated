@@ -229,6 +229,8 @@ def k_means(original_ratings, k, mode):
         dis_of_temp = dis_of_clusters(temp)
         dis_of_best = dis_of_clusters(best_clusters)
         best_clusters = temp if dis_of_temp < dis_of_best else best_clusters
+    logging.info('add:%s,delete:%s,dis:%s', add_of_clusters(clusters), delete_of_clusters(clusters),
+                 dis_of_clusters(clusters))
     logging.info('add_of_best:%s,delete_of_best:%s,dis_of_best:%s', add_of_clusters(best_clusters),
                  delete_of_clusters(best_clusters), dis_of_clusters(best_clusters))
     return best_clusters
