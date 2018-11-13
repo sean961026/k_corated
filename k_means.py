@@ -94,6 +94,15 @@ class Cluster:
         all_s = n * len(self.points)
         return all_s - s
 
+    def items_to_keep(self):
+        n = sum(self.centroid)
+        temp = self._get_items_sum()
+        zip_temp = [(temp[i], i) for i in range(len(temp))]
+        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+        top_temp = [sorted_temp[i] for i in range(n)]
+        top_index = [z[1] for z in top_temp]
+        return top_index
+
     def cost(self):
         n = sum(self.centroid)
         temp = self._get_items_sum()

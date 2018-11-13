@@ -64,13 +64,13 @@ def sort_through_clusters(ratings, clusters):
     return ret
 
 
-def k_corating_slice(sorted_ratings, myslice, centroid=None):  # [start,end)
+def k_corating_slice(sorted_ratings, myslice, items_to_keep=None):  # [start,end)
     logging.info('k corating slice(%s,%s)', myslice.start, myslice.stop)
     part_ratings = sorted_ratings[myslice, :]
     items_need_to_rate = set()
     for record in part_ratings:
         items_need_to_rate = items_need_to_rate.union(supp_user(record))
-    if centroid is None:
+    if items_to_keep is None:
         for item_id in items_need_to_rate:
             for record in part_ratings:
                 if record[item_id] == unknown_rating:
@@ -78,7 +78,7 @@ def k_corating_slice(sorted_ratings, myslice, centroid=None):  # [start,end)
                         pd_rating(original_ratings, int(record[-1] - 1), item_id, web, neighbor_fun, neighbor_para)[0])
     else:
         for item_id in items_need_to_rate:
-            if centroid[item_id] != 1:
+            if item_id not in items_to_keep:
                 for record in part_ratings:
                     record[item_id] = unknown_rating
             else:
@@ -107,7 +107,7 @@ def corating_all_through_clusters(sorted_ratings, clusters):
     for cluster in clusters:
         myslice = slice(start, start + len(cluster.points))
         start += len(cluster.points)
-        k_corating_slice(sorted_ratings, myslice, cluster.centroid)
+        k_corating_slice(sorted_ratings, myslice, cluster.items_to_keep())
     index_translator = sorted_ratings[:, -1]
     k_corated = np.delete(sorted_ratings, sorted_ratings.shape[1] - 1, 1)
     return k_corated, index_translator
