@@ -249,3 +249,7 @@ def main():
     args = parser.parse_args()
     best_clusters = k_means(load(get_ratings_name_from_dataset(args.database)), args.k, args.mode)
     dump_clusters(best_clusters)
+
+
+if __name__ == '__main__':
+    main()
