@@ -224,8 +224,6 @@ def k_means(original_ratings, k, mode):
                      dis_of_clusters(clusters))
         update_all(clusters)
         clear_all(clusters)
-    logging.info('add:%s,delete:%s,dis:%s', add_of_clusters(best_clusters), delete_of_clusters(best_clusters),
-                 dis_of_clusters(best_clusters))
     return best_clusters
 
 
