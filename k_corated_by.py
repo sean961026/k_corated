@@ -37,6 +37,10 @@ def mycmp(user1, user2):
         return set_cmp(user1, user2)
 
 
+def get_sort_index(ratings):
+    sorted_one = sort(ratings)
+    return list(sorted_one[:, -1])
+
 def sort(ratings):
     user_size = ratings.shape[0]
     item_size = ratings.shape[1]

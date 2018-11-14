@@ -3,13 +3,14 @@ import numpy as np
 import logging
 import argparse
 from rs import get_ratings_name_from_dataset, load
+from k_corated_by import get_sort_index
 
 
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
         seeds = get_initial_seeds_randomly(original_ratings, size)
-    elif mode == 'other':
-        seeds = None
+    elif mode == 'sort':
+        seeds = get_initial_seeds_by_sort(original_ratings, size)
     else:
         raise ValueError
     return seeds
@@ -22,6 +23,18 @@ def get_initial_seeds_randomly(original_ratings, random_size):
     else:
         all = [i for i in range(user_size)]
         return random.sample(all, random_size)
+
+
+def get_initial_seeds_by_sort(original_ratings, size):
+    index = get_sort_index(original_ratings)
+    slice_size = len(index) // size
+    seeds = []
+    for i in range(size):
+        start = i * slice_size
+        end = start + slice_size - 1
+        seed = random.randint(start, end)
+        seeds.append(seed)
+    return seeds
 
 
 def normalize(vec):
