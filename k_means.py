@@ -3,7 +3,12 @@ import numpy as np
 import logging
 import argparse
 from rs import get_ratings_name_from_dataset, load
-from k_corated_by import get_sort_index
+from k_corated_by import sort
+
+
+def get_sort_index(ratings):
+    sorted_one = sort(ratings)
+    return list(sorted_one[:, -1])
 
 
 def get_initial_seeds(original_ratings, size, mode):
