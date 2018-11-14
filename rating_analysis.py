@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from rs import load, get_ratings_name_from_dataset, supp_user
 import argparse
-
+import logging
 
 def analysis(original_ratings):
     size_list = []
@@ -13,6 +13,12 @@ def analysis(original_ratings):
     plt.figure()
     plt.plot(x, size_list)
     plt.savefig('size.jpg')
+    portion = [0] * 10
+    for size in size_list:
+        index = size // 100
+        portion[index] += 1
+    logging.info(portion)
+    logging.info(sum(size_list) / len(size_list))
 
 
 if __name__ == '__main__':
