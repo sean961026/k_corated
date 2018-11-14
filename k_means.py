@@ -2,49 +2,7 @@ import random
 import numpy as np
 import logging
 import argparse
-from rs import get_ratings_name_from_dataset, load, supp_user
-from functools import cmp_to_key
-
-
-def set_cmp(user1, user2):
-    items_1 = supp_user(user1)
-    items_2 = supp_user(user2)
-    while len(items_1) != 0:
-        if min(items_1) < min(items_2):
-            return -1
-        elif min(items_1) > min(items_2):
-            return 1
-        else:
-            min_value = min(items_1)
-            items_1.remove(min_value)
-            items_2.remove(min_value)
-    return 0
-
-
-def mycmp(user1, user2):
-    if len(supp_user(user1)) < len(supp_user(user2)):
-        return -1
-    elif len(supp_user(user1)) > len(supp_user(user2)):
-        return 1
-    else:
-        return set_cmp(user1, user2)
-
-
-def get_sort_index(ratings):
-    sorted_one = sort(ratings)
-    return list(sorted_one[:, -1])
-
-
-def sort(ratings):
-    user_size = ratings.shape[0]
-    item_size = ratings.shape[1]
-    ratings = np.insert(ratings, item_size, [i + 1 for i in range(user_size)], 1)
-    temp = [ratings[i, :] for i in range(user_size)]
-    temp.sort(key=cmp_to_key(mycmp))
-    ret = np.zeros(shape=(user_size, item_size + 1))
-    for i in range(user_size):
-        ret[i, :] = temp[i].copy()
-    return ret
+from rs import get_ratings_name_from_dataset, load
 
 
 def get_initial_seeds(original_ratings, size, mode):
@@ -67,12 +25,16 @@ def get_initial_seeds_randomly(original_ratings, random_size):
 
 
 def get_initial_seeds_by_sort(original_ratings, size):
+    from k_corated_by import get_sort_index
     index = get_sort_index(original_ratings)
     slice_size = len(index) // size
     seeds = []
     for i in range(size):
         start = i * slice_size
-        end = start + slice_size - 1
+        if i == size - 1:
+            end = len(index) - 1
+        else:
+            end = start + slice_size - 1
         seed = random.randint(start, end)
         seeds.append(seed)
     return seeds
