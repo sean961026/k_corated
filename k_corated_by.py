@@ -157,7 +157,7 @@ def main():
     parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
     parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
     parser.add_argument('-w', '--web', required=True)
-    parser.add_argument('-k', type=int)
+    parser.add_argument('-k', type=int, required=True)
     parser.add_argument('-s', '--suffix')
     parser.add_argument('-t', '--threshold')
     parser.add_argument('--top', type=int)
@@ -177,7 +177,7 @@ def main():
         global web, sorted_ratings, original_ratings
         web = load(webname)
         if cluster_flag:
-            clusters = load_clusters(original_ratings)
+            clusters = load_clusters(original_ratings, k)
             sorted_ratings = sort_through_clusters(original_ratings, clusters)
             k_corated, index_translator = corating_all_through_clusters(sorted_ratings.copy(), clusters)
         else:

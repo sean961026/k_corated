@@ -227,16 +227,16 @@ def k_means(original_ratings, k, mode):
     return best_clusters
 
 
-def dump_clusters(clusters):
-    with open('best_clusters.txt', 'w') as file:
+def dump_clusters(clusters, k):
+    with open('best_clusters_%s.txt' % k, 'w') as file:
         for cluster in clusters:
             file.write('%d:%s' % (sum(cluster.centroid), cluster.points) + '\n')
 
 
-def load_clusters(original_ratings):
+def load_clusters(original_ratings, k):
     Cluster.original_ratings = original_ratings
     clusters = []
-    with open('best_clusters.txt', 'r') as file:
+    with open('best_clusters_%s.txt' % k, 'r') as file:
         lines = file.readlines()
         for line in lines:
             cen_sum, points = line.split(':')
@@ -248,6 +248,7 @@ def load_clusters(original_ratings):
             clusters.append(cluster)
     return clusters
 
+
 def main():
     parser = argparse.ArgumentParser(description='k corating a rating file by a certain web')
     parser.add_argument('-d', '--database', required=True)
@@ -255,7 +256,7 @@ def main():
     parser.add_argument('-m', '--mode', required=True)
     args = parser.parse_args()
     best_clusters = k_means(load(get_ratings_name_from_dataset(args.database)), args.k, args.mode)
-    dump_clusters(best_clusters)
+    dump_clusters(best_clusters, args.k)
 
 
 if __name__ == '__main__':
