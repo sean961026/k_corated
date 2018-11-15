@@ -195,7 +195,7 @@ def k_means(original_ratings, k, mode):
     for i in range(10):
         k_means_iter_once(clusters)
         info = []
-        for baseline in [0.1, 0.2, 0.3, 0.4]:
+        for baseline in [0.01, 0.03, 0.05, 0.07, 0.09]:
             add, cost = contribution_of_clusters(clusters, baseline)
             piece = {'baseline': baseline, 'add': add, 'cost': cost, 'weighted': add + 10 * cost}
             info.append(piece)
