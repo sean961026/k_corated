@@ -139,7 +139,7 @@ class Cluster:
                     return i - 1
             return size
 
-        for top in [self.start, get_top_by_portion_base(0.5), get_top_by_portion_base(0.75)]:
+        for top in [get_top_by_portion_base(0.1), get_top_by_portion_base(0.2), get_top_by_portion_base(0.3)]:
             p = portion[top]
             add, cost = self.top_n_contribution(top)
             logging.info({'top': top, 'portion': p, 'add': add, 'cost': cost})
