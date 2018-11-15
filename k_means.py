@@ -127,9 +127,19 @@ class Cluster:
 
     def info(self):
         temp = self._get_items_sum()
+        size = len(temp)
         portion = [i / len(self.points) for i in temp]
         sorted_portion = portion.sort(reverse=True)
-        for top in [self.start, int(0.5 * len(temp)), int(0.75 * len(temp))]:
+
+        def get_top_by_portion_base(base):
+            if sorted_portion[0] < base:
+                return 0
+            for i in range(size):
+                if sorted_portion[i] < base:
+                    return i - 1
+            return size
+
+        for top in [self.start, get_top_by_portion_base(0.5), get_top_by_portion_base(0.75)]:
             p = sorted_portion[top]
             add, cost = self.top_n_contribution(top)
             logging.info({'top': top, 'portion': p, 'add': add, 'cost': cost})
