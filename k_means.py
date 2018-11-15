@@ -59,14 +59,15 @@ class Cluster:
         if len(self.points):
             size = len(self.centroid)
             temp = self._get_items_sum()
-            zip_temp = [(temp[i], i) for i in range(len(temp))]
-            sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
-            top_temp = [sorted_temp[i] for i in range(size)]
-            top_index = [z[1] for z in top_temp]
-            for i in range(Cluster.original_ratings.shape[1]):
-                if i not in top_index:
-                    temp[i] = 0
-            self.centroid = normalize(temp)
+            # zip_temp = [(temp[i], i) for i in range(len(temp))]
+            # sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+            # top_temp = [sorted_temp[i] for i in range(size)]
+            # top_index = [z[1] for z in top_temp]
+            # for i in range(Cluster.original_ratings.shape[1]):
+            #     if i not in top_index:
+            #         temp[i] = 0
+            # self.centroid = normalize(temp)
+            self.centroid = [i / len(self.points) for i in temp]
 
     def clear(self):
         self.points.clear()
@@ -87,11 +88,15 @@ class Cluster:
 
     def distance_to(self, point):
         point_vec = normalize(Cluster.original_ratings[point, :])
-        corated = 0
+        # corated = 0
+        # for i in range(len(point_vec)):
+        #     if self.centroid[i] == 1 and point_vec[i] == 1:
+        #         corated += 1
+        # return -corated / (sum(self.centroid) + sum(point_vec) - corated)
+        dis = 0
         for i in range(len(point_vec)):
-            if self.centroid[i] == 1 and point_vec[i] == 1:
-                corated += 1
-        return -corated / (sum(self.centroid) + sum(point_vec) - corated)
+            dis += (point_vec[i] - self.centroid[i]) ** 2
+        return dis
 
     def dis_sum(self):
         s = sum(self._get_corated()) * len(self.points)
