@@ -80,11 +80,10 @@ class Cluster:
         self.points.append(point)
 
     def distance_to(self, point):
-        point_vec = normalize(Cluster.original_ratings[point, :])
-        dis = 0
-        for i in range(len(point_vec)):
-            dis += (point_vec[i] - self.centroid[i]) ** 2
-        return dis
+        point_vec = np.array(normalize(Cluster.original_ratings[point, :]))
+        centroid = np.array(self.centroid)
+        temp = point_vec - centroid
+        return np.sqrt((temp * temp).sum())
 
     def dis_sum(self):
         s = sum(self._get_corated()) * len(self.points)
