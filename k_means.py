@@ -192,7 +192,7 @@ def k_means(original_ratings, k, mode):
     Cluster.original_ratings = original_ratings
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
-    for i in range(10):
+    for i in range(20):
         k_means_iter_once(clusters)
         info = []
         for baseline in [0.01, 0.03, 0.05, 0.07, 0.09]:
