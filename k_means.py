@@ -93,16 +93,6 @@ class Cluster:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
-    def items_to_keep(self):
-        # n = sum(self.centroid)
-        n = self.start
-        temp = self._get_items_sum()
-        zip_temp = [(temp[i], i) for i in range(len(temp))]
-        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
-        top_temp = [sorted_temp[i] for i in range(n)]
-        top_index = [z[1] for z in top_temp]
-        return top_index
-
     def top_n_contribution(self, n):
         temp = self._get_items_sum()
         zip_temp = [(temp[i], i) for i in range(len(temp))]
@@ -118,6 +108,22 @@ class Cluster:
             if i not in top_index:
                 cost += temp[i]
         return all_s - s, cost
+
+    def top_n_greater_than(self, baseline):
+        temp = self._get_items_sum()
+        size = len(temp)
+        portion = [i / len(self.points) for i in temp]
+        portion.sort(reverse=True)
+        if portion[0] < baseline:
+            return 0
+        for i in range(size):
+            if portion[i] < baseline:
+                return i - 1
+        return size
+
+    def contribution_by_baseline(self, baseline):
+        n = self.top_n_greater_than(baseline)
+        return self.top_n_contribution(n)
 
     def copy(self):
         ins = Cluster(0)
@@ -145,28 +151,14 @@ class Cluster:
             logging.info({'top': top, 'portion': p, 'add': add, 'cost': cost})
 
 
-def dis_of_clusters(clusters):
-    # add = add_of_clusters(clusters)
-    # delete = delete_of_clusters(clusters)
-    # return add + 10 * delete
-    dis = 0
+def contribution_of_clusters(clusters, baseline):
+    add = 0
+    cost = 0
     for cluster in clusters:
-        dis += cluster.dis_sum()
-    return dis
-
-
-def delete_of_clusters(clusters):
-    s = 0
-    for cluster in clusters:
-        s += cluster.cost()
-    return s
-
-
-def add_of_clusters(clusters):
-    s = 0
-    for cluster in clusters:
-        s += cluster.new_dis()
-    return s
+        a, c = cluster.contribution_by_baseline(baseline)
+        add += a
+        cost += c
+    return add, cost
 
 
 def k_means_iter_once(clusters):
@@ -203,8 +195,12 @@ def k_means(original_ratings, k, mode):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(10):
         k_means_iter_once(clusters)
-        for cluster in clusters:
-            cluster.info()
+        info = []
+        for baseline in [0.1, 0.2, 0.3, 0.4]:
+            add, cost = contribution_of_clusters(clusters, baseline)
+            piece = {'baseline': baseline, 'add': add, 'cost': cost, 'weighted': add + 10 * cost}
+            info.append(piece)
+        logging.info(info)
         update_all(clusters)
         clear_all(clusters)
     return clusters
