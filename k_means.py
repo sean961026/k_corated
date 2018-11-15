@@ -1,9 +1,9 @@
 import random
-import numpy as np
 import logging
 import argparse
 from rs import get_ratings_name_from_dataset, load
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def get_initial_seeds(original_ratings, size, mode):
@@ -194,14 +194,19 @@ def k_means(original_ratings, k, mode):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(15):
         k_means_iter_once(clusters)
-        info = []
-        for baseline in [0.03, 0.05, 0.07, 0.09, 0.11]:
-            add, cost = contribution_of_clusters(clusters, baseline)
-            piece = {'baseline': baseline, 'add': add, 'cost': cost, 'weighted': add + 10 * cost}
-            info.append(piece)
-        logging.info(info)
         update_all(clusters)
         clear_all(clusters)
+    k_means_iter_once(clusters)
+    adds = []
+    costs = []
+    for i in range(1, 50, 2):
+        baseline = i / 100
+        add, cost = contribution_of_clusters(clusters, baseline)
+        adds.append(add)
+        costs.append(cost)
+    plt.figure()
+    plt.plot(cost, adds)
+    plt.savefig('test.jpg')
     return clusters
 
 
