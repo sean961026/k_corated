@@ -188,7 +188,7 @@ def k_means(original_ratings, k, mode):
     Cluster.original_ratings = original_ratings
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
-    for i in range(15):
+    for i in range(10):
         logging.info('k=%s:begin to iterate %sth time', k, i)
         k_means_iter_once(clusters)
         update_all(clusters)
