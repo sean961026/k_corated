@@ -4,6 +4,7 @@ import argparse
 from rs import get_ratings_name_from_dataset, load
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 
 def get_initial_seeds(original_ratings, size, mode):
@@ -85,7 +86,7 @@ class Cluster:
         temp = point_vec - centroid
         return np.sqrt((temp * temp).sum())
 
-    def dis_sum(self):
+    def loss(self):
         s = sum(self._get_corated()) * len(self.points)
         t = 0
         for point in self.points:
@@ -160,6 +161,13 @@ def contribution_of_clusters(clusters, baseline):
     return add, cost
 
 
+def loss_of_clusters(clusters):
+    s = 0
+    for cluster in clusters:
+        s += cluster.loss()
+    return s
+
+
 def k_means_iter_once(clusters):
     point_size = Cluster.original_ratings.shape[0]
     for point in range(point_size):
@@ -180,12 +188,17 @@ def clear_all(clusters):
         cluster.clear()
 
 
-def copy_all(clusters):
-    cp = []
-    for cluster in clusters:
-        single_cp = cluster.copy()
-        cp.append(single_cp)
-    return cp
+def analysis_of_clusters(clusters):
+    adds = []
+    costs = []
+    for i in range(1, 50, 2):
+        baseline = i / 100
+        add, cost = contribution_of_clusters(clusters, baseline)
+        adds.append(math.log(add))
+        costs.append(math.log(cost))
+    plt.figure()
+    plt.plot(costs, adds)
+    plt.savefig('test.jpg')
 
 
 def k_means(original_ratings, k, mode):
@@ -193,21 +206,24 @@ def k_means(original_ratings, k, mode):
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(15):
+        logging.info('begin to iterate %sth times', i)
         k_means_iter_once(clusters)
         update_all(clusters)
         clear_all(clusters)
     k_means_iter_once(clusters)
-    adds = []
-    costs = []
-    for i in range(1, 50, 2):
-        baseline = i / 100
-        add, cost = contribution_of_clusters(clusters, baseline)
-        adds.append(add)
-        costs.append(cost)
-    plt.figure()
-    plt.plot(cost, adds)
-    plt.savefig('test.jpg')
     return clusters
+
+
+def find_best_k(original_ratings, mode):
+    k_list = [i for i in range(20, 110, 5)]
+    loss_list = []
+    for k in k_list:
+        clusters = k_means(original_ratings, k, mode)
+        loss = loss_of_clusters(clusters)
+        loss_list.append(loss)
+    plt.figure()
+    plt.plot(k_list, loss_list)
+    plt.savefig('k_loss.jpg')
 
 
 def dump_clusters(clusters, k):
@@ -238,8 +254,14 @@ def main():
     parser.add_argument('-k', type=int, required=True)
     parser.add_argument('-m', '--mode', required=True)
     args = parser.parse_args()
-    best_clusters = k_means(load(get_ratings_name_from_dataset(args.database)), args.k, args.mode)
-    dump_clusters(best_clusters, args.k)
+    original_ratings = load(get_ratings_name_from_dataset(args.database))
+    k = args.k
+    mode = args.mode
+    if k != 0:
+        best_clusters = k_means(original_ratings, k, mode)
+        dump_clusters(best_clusters, k)
+    else:
+        find_best_k(original_ratings, mode)
 
 
 if __name__ == '__main__':
