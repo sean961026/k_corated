@@ -56,15 +56,27 @@ class Cluster:
     def __init__(self, centroid_index):
         self.centroid = normalize(Cluster.original_ratings[centroid_index, :])
         self.points = []
-        self.start = sum(self.centroid)
 
     def update_centroid(self):
         if len(self.points):
-            temp = self._get_items_sum()
-            self.centroid = [i / len(self.points) for i in temp]
+            self.centroid = [i / len(self.points) for i in self.items_sum]
+        self._clear()
 
-    def clear(self):
+    def _clear(self):
         self.points.clear()
+        self.items_sum = None
+
+    def items_to_keep(self):
+        baseline = None
+        top = self.top_n_greater_than(baseline)
+        zipped = [(self.items_sum[index], index) for index in range(len(self.items_sum))]
+        sorted_temp = sorted(zipped, key=lambda x: x[0], reverse=True)
+        top_temp = [sorted_temp[i] for i in range(top)]
+        top_index = [z[1] for z in top_temp]
+        return top_index
+
+    def points_fix(self):
+        self.items_sum = self._get_items_sum()
 
     def _get_items_sum(self):
         temp = [0] * Cluster.original_ratings.shape[1]
@@ -72,10 +84,6 @@ class Cluster:
             for point in self.points:
                 temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
         return temp
-
-    def _get_corated(self):
-        temp = self._get_items_sum()
-        return normalize(temp)
 
     def add_new_point(self, point):
         self.points.append(point)
@@ -87,16 +95,16 @@ class Cluster:
         return np.sqrt((temp * temp).sum())
 
     def loss(self):
-        s = sum(self._get_corated()) * len(self.points)
+        s = sum(normalize(self.items_sum)) * len(self.points)
         t = 0
         for point in self.points:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
     def top_n_contribution(self, n):
-        temp = self._get_items_sum()
-        zip_temp = [(temp[i], i) for i in range(len(temp))]
-        sorted_temp = sorted(zip_temp, reverse=True, key=lambda x: x[0])
+        temp = self.items_sum
+        zipped = [(self.items_sum[index], index) for index in range(len(self.items_sum))]
+        sorted_temp = sorted(zipped, key=lambda x: x[0], reverse=True)
         top_temp = [sorted_temp[i] for i in range(n)]
         top_index = [z[1] for z in top_temp]
         s = 0
@@ -110,45 +118,18 @@ class Cluster:
         return all_s - s, cost
 
     def top_n_greater_than(self, baseline):
-        temp = self._get_items_sum()
-        size = len(temp)
+        temp = self.items_sum
         portion = [i / len(self.points) for i in temp]
+        portion.append(baseline)
         portion.sort(reverse=True)
-        if portion[0] < baseline:
-            return 0
-        for i in range(size):
-            if portion[i] < baseline:
-                return i - 1
-        return size
+        return portion.index(baseline) - 1
 
     def contribution_by_baseline(self, baseline):
         n = self.top_n_greater_than(baseline)
         return self.top_n_contribution(n)
 
-    def copy(self):
-        ins = Cluster(0)
-        ins.centroid = self.centroid
-        ins.points = self.points.copy()
-        return ins
-
     def info(self):
-        temp = self._get_items_sum()
-        size = len(temp)
-        portion = [i / len(self.points) for i in temp]
-        portion.sort(reverse=True)
-
-        def get_top_by_portion_base(base):
-            if portion[0] < base:
-                return 0
-            for i in range(size):
-                if portion[i] < base:
-                    return i - 1
-            return size
-
-        for top in [get_top_by_portion_base(0.1), get_top_by_portion_base(0.2), get_top_by_portion_base(0.3)]:
-            p = portion[top]
-            add, cost = self.top_n_contribution(top)
-            logging.info({'top': top, 'portion': p, 'add': add, 'cost': cost})
+        pass
 
 
 def contribution_of_clusters(clusters, baseline):
@@ -176,6 +157,8 @@ def k_means_iter_once(clusters):
             dis.append(cluster.distance_to(point))
         min_cluster = dis.index(min(dis))
         clusters[min_cluster].add_new_point(point)
+    for cluster in clusters:
+        cluster.points_fix()
 
 
 def update_all(clusters):
@@ -183,22 +166,22 @@ def update_all(clusters):
         cluster.update_centroid()
 
 
-def clear_all(clusters):
-    for cluster in clusters:
-        cluster.clear()
-
-
 def analysis_of_clusters(clusters):
     adds = []
     costs = []
+    baselines = []
     for i in range(1, 50, 2):
         baseline = i / 100
         add, cost = contribution_of_clusters(clusters, baseline)
-        adds.append(math.log(add))
-        costs.append(math.log(cost))
+        adds.append(add)
+        costs.append(cost)
+        baselines.append(baseline)
     plt.figure()
     plt.plot(costs, adds)
-    plt.savefig('test.jpg')
+    plt.savefig('delete-add.jpg')
+    plt.figure()
+    plt.plot(baselines, [cost / 80000 for cost in costs])
+    plt.savefig('baseline-cost.jpg')
 
 
 def k_means(original_ratings, k, mode):
@@ -206,16 +189,15 @@ def k_means(original_ratings, k, mode):
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(15):
-        logging.info('begin to iterate %sth times', i)
+        logging.info('k=%s:begin to iterate %sth time', k, i)
         k_means_iter_once(clusters)
         update_all(clusters)
-        clear_all(clusters)
     k_means_iter_once(clusters)
     return clusters
 
 
 def find_best_k(original_ratings, mode):
-    k_list = [i for i in range(20, 110, 5)]
+    k_list = [i for i in range(40, 150, 10)]
     loss_list = []
     for k in k_list:
         clusters = k_means(original_ratings, k, mode)
@@ -229,7 +211,7 @@ def find_best_k(original_ratings, mode):
 def dump_clusters(clusters, k):
     with open('best_clusters_%s.txt' % k, 'w') as file:
         for cluster in clusters:
-            file.write('%d:%s' % (sum(cluster.centroid), cluster.points) + '\n')
+            file.write('%s' % (cluster.points) + '\n')
 
 
 def load_clusters(original_ratings, k):
@@ -238,12 +220,10 @@ def load_clusters(original_ratings, k):
     with open('best_clusters_%s.txt' % k, 'r') as file:
         lines = file.readlines()
         for line in lines:
-            cen_sum, points = line.split(':')
-            cen_sum = int(cen_sum)
-            points = eval(points)
+            points = eval(line)
             cluster = Cluster(0)
-            cluster.centroid = [cen_sum]
             cluster.points = points
+            cluster.points_fix()
             clusters.append(cluster)
     return clusters
 
@@ -253,13 +233,17 @@ def main():
     parser.add_argument('-d', '--database', required=True)
     parser.add_argument('-k', type=int, required=True)
     parser.add_argument('-m', '--mode', required=True)
+    parser.add_argument('-a', '--analysis', action='store_true')
     args = parser.parse_args()
     original_ratings = load(get_ratings_name_from_dataset(args.database))
     k = args.k
     mode = args.mode
+    need_analysis = args.analysis
     if k != 0:
         best_clusters = k_means(original_ratings, k, mode)
         dump_clusters(best_clusters, k)
+        if need_analysis:
+            analysis_of_clusters(best_clusters)
     else:
         find_best_k(original_ratings, mode)
 
