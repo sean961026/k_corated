@@ -101,6 +101,7 @@ class Cluster:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
+
     def top_n_contribution(self, n):
         temp = self.items_sum
         zipped = [(self.items_sum[index], index) for index in range(len(self.items_sum))]
@@ -189,8 +190,8 @@ def k_means(original_ratings, k, mode):
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(10):
-        logging.info('k=%s:begin to iterate %sth time', k, i)
         k_means_iter_once(clusters)
+        logging.info('k=%s:iterated %sth time, loss sum:%s', k, i, loss_of_clusters(clusters))
         update_all(clusters)
     k_means_iter_once(clusters)
     return clusters
