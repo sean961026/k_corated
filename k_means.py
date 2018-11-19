@@ -209,8 +209,7 @@ def k_means(original_ratings, k, mode, iter_time=10):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(iter_time):
         k_means_iter_once(clusters)
-        logging.info('k=%s:iterated %sth time, loss sum:%s,lost sum:%s', k, i, loss_of_clusters(clusters),
-                     lost_of_clusters(clusters))
+        logging.info('k=%s:iterated %sth time, loss sum:%s', k, i, loss_of_clusters(clusters))
         update_all(clusters)
     k_means_iter_once(clusters)
     return clusters
@@ -229,6 +228,8 @@ def find_best_k(original_ratings, mode):
     plt.figure()
     plt.plot(k_list, loss_list)
     plt.savefig('k_loss.jpg')
+    logging.info(k_list)
+    logging.info(loss_list)
 
 
 def dump_clusters(clusters, k):
