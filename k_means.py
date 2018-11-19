@@ -32,8 +32,10 @@ def get_best_initial_seeds(original_ratings, size, mode, try_time=10):
     for i in range(try_time):
         seeds_list.append(get_initial_seeds(original_ratings, size, mode))
     for seeds in seeds_list:
-        clusters = k_means(original_ratings, seeds, 0)
-        loss_list.append(loss_of_clusters(clusters))
+        clusters = [Cluster(seed) for seed in seeds]
+        k_means_iter_once(clusters)
+        loss = loss_of_clusters(clusters)
+        loss_list.append(loss)
     min_loss = min(loss_list)
     min_index = loss_list.index(min_loss)
     return seeds_list[min_index]
@@ -216,15 +218,23 @@ def analysis_of_clusters(clusters):
     plt.savefig('baseline-cost.jpg')
 
 
-def k_means(original_ratings, seeds, iter_time=10):
-    Cluster.original_ratings = original_ratings
-    # seeds = get_initial_seeds(original_ratings, k, mode)
+def k_means(seeds, threshold=5000):
     clusters = [Cluster(seed) for seed in seeds]
-    for i in range(iter_time):
-        k_means_iter_once(clusters)
-        logging.info('k=%s:iterated %sth time, loss sum:%s', len(seeds), i, loss_of_clusters(clusters))
-        update_all(clusters)
     k_means_iter_once(clusters)
+    old_loss = loss_of_clusters(clusters)
+    update_all(clusters)
+    index = 0
+    while True:
+        k_means_iter_once(clusters)
+        new_loss = loss_of_clusters(clusters)
+        diff = new_loss - old_loss
+        logging.info('k:%s, iteration:%s, old_loss:%s, new_loss:%s, diff:%s', len(seeds), index, old_loss, new_loss,
+                     diff)
+        index += 1
+        if diff < threshold:
+            break
+        else:
+            update_all(clusters)
     return clusters
 
 
@@ -233,7 +243,7 @@ def find_best_k(original_ratings, mode):
     loss_list = []
     for k in k_list:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
-        clusters = k_means(original_ratings, best_seeds)
+        clusters = k_means(best_seeds)
         loss_list.append(loss_of_clusters(clusters))
     plt.figure()
     plt.plot(k_list, loss_list)
@@ -273,9 +283,10 @@ def main():
     k = args.k
     mode = args.mode
     need_analysis = args.analysis
+    Cluster.original_ratings = original_ratings
     if k != 0:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
-        best_clusters = k_means(original_ratings, best_seeds)
+        best_clusters = k_means(best_seeds)
         dump_clusters(best_clusters, k)
         if need_analysis:
             analysis_of_clusters(best_clusters)
