@@ -37,7 +37,7 @@ def get_initial_seeds_by_sort(original_ratings, size):
             end = len(index) - 1
         else:
             end = start + slice_size - 1
-        seed = random.randint(start, end)
+        seed = (start + end) // 2
         seeds.append(seed)
     return seeds
 
