@@ -197,7 +197,7 @@ def k_means(original_ratings, k, mode):
 
 
 def find_best_k(original_ratings, mode):
-    k_list = [i for i in range(40, 150, 10)]
+    k_list = [i for i in range(70, 110, 5)]
     loss_list = []
     for k in k_list:
         clusters = k_means(original_ratings, k, mode)
