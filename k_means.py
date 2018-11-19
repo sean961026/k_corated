@@ -203,11 +203,11 @@ def analysis_of_clusters(clusters):
     plt.savefig('baseline-cost.jpg')
 
 
-def k_means(original_ratings, k, mode):
+def k_means(original_ratings, k, mode, iter_time=10):
     Cluster.original_ratings = original_ratings
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
-    for i in range(15):
+    for i in range(iter_time):
         k_means_iter_once(clusters)
         logging.info('k=%s:iterated %sth time, loss sum:%s,lost sum:%s', k, i, loss_of_clusters(clusters),
                      lost_of_clusters(clusters))
@@ -217,12 +217,15 @@ def k_means(original_ratings, k, mode):
 
 
 def find_best_k(original_ratings, mode):
-    k_list = [i for i in range(70, 110, 5)]
+    k_list = [i for i in range(70, 110, 10)]
     loss_list = []
     for k in k_list:
-        clusters = k_means(original_ratings, k, mode)
-        loss = loss_of_clusters(clusters)
-        loss_list.append(loss)
+        loss_temp = []
+        for i in range(5):
+            clusters = k_means(original_ratings, k, mode, 5)
+            loss = loss_of_clusters(clusters)
+            loss_temp.append(loss)
+        loss_list.append(sum(loss_temp) / len(loss_temp))
     plt.figure()
     plt.plot(k_list, loss_list)
     plt.savefig('k_loss.jpg')
