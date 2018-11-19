@@ -224,7 +224,7 @@ def find_best_k(original_ratings, mode):
             clusters = k_means(original_ratings, k, mode, 5)
             loss = loss_of_clusters(clusters)
             loss_temp.append(loss)
-        loss_list.append(sum(loss_temp) / len(loss_temp))
+        loss_list.append(min(loss_temp))
     plt.figure()
     plt.plot(k_list, loss_list)
     plt.savefig('k_loss.jpg')
