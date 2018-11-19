@@ -101,6 +101,17 @@ class Cluster:
             t += sum(normalize(Cluster.original_ratings[point, :]))
         return s - t
 
+    def lost(self):
+        if len(self.points) != 0:
+            temp_center = np.array([i / len(self.points) for i in self.items_sum])
+            lost = 0
+            for point in self.points:
+                normalized_point = np.array(normalize(Cluster.original_ratings[point, :]))
+                temp = temp_center - normalized_point
+                lost += np.sqrt((temp * temp).sum())
+            return lost
+        else:
+            return 0
 
     def top_n_contribution(self, n):
         temp = self.items_sum
@@ -150,6 +161,13 @@ def loss_of_clusters(clusters):
     return s
 
 
+def lost_of_clusters(clusters):
+    s = 0
+    for cluster in clusters:
+        s += cluster.lost()
+    return s
+
+
 def k_means_iter_once(clusters):
     point_size = Cluster.original_ratings.shape[0]
     for point in range(point_size):
@@ -189,9 +207,10 @@ def k_means(original_ratings, k, mode):
     Cluster.original_ratings = original_ratings
     seeds = get_initial_seeds(original_ratings, k, mode)
     clusters = [Cluster(seed) for seed in seeds]
-    for i in range(10):
+    for i in range(15):
         k_means_iter_once(clusters)
-        logging.info('k=%s:iterated %sth time, loss sum:%s', k, i, loss_of_clusters(clusters))
+        logging.info('k=%s:iterated %sth time, loss sum:%s,lost sum:%s', k, i, loss_of_clusters(clusters),
+                     lost_of_clusters(clusters))
         update_all(clusters)
     k_means_iter_once(clusters)
     return clusters
