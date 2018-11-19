@@ -235,6 +235,7 @@ def k_means(seeds, threshold=5000):
         if diff < threshold:
             break
         else:
+            old_loss = new_loss
             update_all(clusters)
     return clusters
 
