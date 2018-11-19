@@ -228,7 +228,7 @@ def k_means(seeds, threshold=5000):
     while True:
         k_means_iter_once(clusters)
         new_loss = loss_of_clusters(clusters)
-        diff = new_loss - old_loss
+        diff = old_loss - new_loss
         logging.info('k:%s, iteration:%s, old_loss:%s, new_loss:%s, diff:%s', len(seeds), index, old_loss, new_loss,
                      diff)
         index += 1
