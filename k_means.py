@@ -222,7 +222,7 @@ def k_means(original_ratings, seeds, iter_time=10):
     clusters = [Cluster(seed) for seed in seeds]
     for i in range(iter_time):
         k_means_iter_once(clusters)
-        logging.info('k=%s:iterated %sth time, loss sum:%s', k, i, loss_of_clusters(clusters))
+        logging.info('k=%s:iterated %sth time, loss sum:%s', len(seeds), i, loss_of_clusters(clusters))
         update_all(clusters)
     k_means_iter_once(clusters)
     return clusters
