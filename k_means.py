@@ -32,6 +32,7 @@ def get_best_initial_seeds(original_ratings, size, mode, try_time=10):
     for i in range(try_time):
         seeds_list.append(get_initial_seeds(original_ratings, size, mode))
     for seeds in seeds_list:
+        logging.info('trying %sth seeds', seeds_list.index(seeds))
         clusters = [Cluster(seed) for seed in seeds]
         k_means_iter_once(clusters)
         loss = loss_of_clusters(clusters)
