@@ -4,7 +4,6 @@ import argparse
 from rs import get_ratings_name_from_dataset, load
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 
 
 def get_initial_seeds(original_ratings, size, mode):
@@ -103,7 +102,7 @@ class Cluster:
         self.items_sum = None
 
     def items_to_keep(self):
-        baseline = None
+        baseline = 0.05
         top = self.top_n_greater_than(baseline)
         zipped = [(self.items_sum[index], index) for index in range(len(self.items_sum))]
         sorted_temp = sorted(zipped, key=lambda x: x[0], reverse=True)
