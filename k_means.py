@@ -41,7 +41,7 @@ def get_initial_seeds_by_density(original_ratings, size):
             logging.info('filling %dth row', i)
             for j in range(user_size):
                 dis_map[i, j] = dis(i, j)
-        dump('dis_map.csv')
+        dump('dis_map.csv', dis_map)
 
     def RS(i):
         return dis_map[i, :].sum()
