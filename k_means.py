@@ -59,10 +59,13 @@ def get_initial_seeds_by_density(original_ratings, size):
     def find_l_th_seed(l):
         S = []
         for i in range(user_size):
-            g = []
-            for j in range(l - 1):
-                g.append(dis_map[i, seeds[j]])
-            S.append((min(g), i))
+            if i not in seeds:
+                g = []
+                for j in range(l - 1):
+                    g.append(dis_map[i, seeds[j]])
+                S.append((min(g), i))
+        compensation = [(max(S) + 1, index) for index in seeds]
+        S.extend(compensation)
         S.sort(key=lambda x: x[0])
         SDV = S
         alfa = 0.6
