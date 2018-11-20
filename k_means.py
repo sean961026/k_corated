@@ -1,10 +1,10 @@
 import random
 import logging
 import argparse
-from rs import get_ratings_name_from_dataset, load
+from rs import get_ratings_name_from_dataset, load, dump
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
@@ -32,10 +32,15 @@ def get_initial_seeds_by_density(original_ratings, size):
         temp = np_j - np_i
         return np.sqrt((temp * temp).sum())
 
-    dis_map = np.zeros(shape=(user_size, user_size))
-    for i in range(user_size):
-        for j in range(user_size):
-            dis_map[i, j] = dis(i, j)
+    if os.path.exists('dis_map.csv'):
+        dis_map = load('dis_map.csv')
+    else:
+        dis_map = np.zeros(shape=(user_size, user_size))
+        for i in range(user_size):
+            logging.info('filling %dth row', i)
+            for j in range(user_size):
+                dis_map[i, j] = dis(i, j)
+        dump('dis_map.csv')
 
     def RS(i):
         return dis_map[i, :].sum()
@@ -70,6 +75,7 @@ def get_initial_seeds_by_density(original_ratings, size):
     for i in range(2, size + 1):
         logging.info('selecting %sth seed', i)
         seeds.append(find_l_th_seed(i))
+    logging.info(seeds)
     return seeds
 
 
