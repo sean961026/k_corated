@@ -64,7 +64,8 @@ def get_initial_seeds_by_density(original_ratings, size):
                 for j in range(l - 1):
                     g.append(dis_map[i, seeds[j]])
                 S.append((min(g), i))
-        compensation = [(max(S) + 1, index) for index in seeds]
+        temp = [x[0] for x in S]
+        compensation = [(max(temp) + 1, index) for index in seeds]
         S.extend(compensation)
         S.sort(key=lambda x: x[0])
         SDV = S
