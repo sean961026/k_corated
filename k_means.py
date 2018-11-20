@@ -32,11 +32,13 @@ def get_initial_seeds_by_density(original_ratings, size):
         temp = np_j - np_i
         return np.sqrt((temp * temp).sum())
 
-    def RS(i):
-        s = 0
+    dis_map = np.zeros(shape=(user_size, user_size))
+    for i in range(user_size):
         for j in range(user_size):
-            s += dis(i, j)
-        return s
+            dis_map[i, j] = dis(i, j)
+
+    def RS(i):
+        return dis_map[i, :].sum()
 
     def get_SRS():
         srs = []
@@ -53,7 +55,7 @@ def get_initial_seeds_by_density(original_ratings, size):
         for i in range(user_size):
             g = []
             for j in range(l - 1):
-                g.append(dis(i, SRS[j][1]))
+                g.append(dis_map[i, SRS[j][1]])
             S.append((min(g), i))
         S.sort(key=lambda x: x[0])
         SDV = S
@@ -65,7 +67,7 @@ def get_initial_seeds_by_density(original_ratings, size):
             NDDI.append(alfa * index_SDV.index(i) + (1 - alfa) * index_SRS.index(i))
         return NDDI.index(min(NDDI))
 
-    for i in range(1, size):
+    for i in range(2, size + 1):
         logging.info('selecting %sth seed', i)
         seeds.append(find_l_th_seed(i))
     return seeds
