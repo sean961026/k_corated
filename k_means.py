@@ -66,6 +66,7 @@ def get_initial_seeds_by_density(original_ratings, size):
         return NDDI.index(min(NDDI))
 
     for i in range(1, size):
+        logging.info('selecting %sth seed', i)
         seeds.append(find_l_th_seed(i))
     return seeds
 
