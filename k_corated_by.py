@@ -166,7 +166,6 @@ def main():
     parser.add_argument('-t', '--threshold')
     parser.add_argument('--top', type=int)
     parser.add_argument('-c', '--cluster', action='store_true')
-    parser.add_argument('-m', '--mode')
     args = parser.parse_args()
     data_set = args.dataset
     web_name = args.web
