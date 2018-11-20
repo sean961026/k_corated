@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
         seeds = get_initial_seeds_randomly(original_ratings, size)
@@ -60,7 +61,7 @@ def get_initial_seeds_by_density(original_ratings, size):
         for i in range(user_size):
             g = []
             for j in range(l - 1):
-                g.append(dis_map[i, SRS[j][1]])
+                g.append(dis_map[i, seeds[j]])
             S.append((min(g), i))
         S.sort(key=lambda x: x[0])
         SDV = S
