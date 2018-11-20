@@ -10,10 +10,28 @@ import math
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
         seeds = get_initial_seeds_randomly(original_ratings, size)
-    elif mode == 'sort':
-        seeds = get_initial_seeds_by_sort(original_ratings, size)
+    elif mode == 'rsort':
+        seeds = get_initial_seeds_by_rsort(original_ratings, size)
+    elif mode == 'dsort':
+        seeds = get_initial_seeds_by_dsort(original_ratings, size)
     else:
         raise ValueError
+    return seeds
+
+
+def get_initial_seeds_by_dsort(original_ratings, size):
+    from k_corated_by import get_sort_index
+    index = get_sort_index(original_ratings)
+    slice_size = len(index) // size
+    seeds = []
+    for i in range(size):
+        start = i * slice_size
+        if i == size - 1:
+            end = len(index) - 1
+        else:
+            end = start + slice_size - 1
+        seed = (start + end) // 2
+        seeds.append(seed)
     return seeds
 
 
@@ -27,6 +45,8 @@ def get_initial_seeds_randomly(original_ratings, random_size):
 
 
 def get_best_initial_seeds(original_ratings, size, mode, try_time=10):
+    if mode == 'dsort':
+        try_time = 1
     seeds_list = []
     loss_list = []
     for i in range(try_time):
@@ -42,7 +62,7 @@ def get_best_initial_seeds(original_ratings, size, mode, try_time=10):
     return seeds_list[min_index]
 
 
-def get_initial_seeds_by_sort(original_ratings, size):
+def get_initial_seeds_by_rsort(original_ratings, size):
     from k_corated_by import get_sort_index
     index = get_sort_index(original_ratings)
     slice_size = len(index) // size
