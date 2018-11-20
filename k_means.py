@@ -13,8 +13,60 @@ def get_initial_seeds(original_ratings, size, mode):
         seeds = get_initial_seeds_by_rsort(original_ratings, size)
     elif mode == 'dsort':
         seeds = get_initial_seeds_by_dsort(original_ratings, size)
+    elif mode == 'density':
+        seeds = get_initial_seeds_by_density(original_ratings, size)
     else:
         raise ValueError
+    return seeds
+
+
+def get_initial_seeds_by_density(original_ratings, size):
+    user_size = original_ratings.shape[0]
+    seeds = []
+
+    def dis(i, j):
+        norm_i = normalize(original_ratings[i, :])
+        norm_j = normalize(original_ratings[j, :])
+        np_i = np.array(norm_i)
+        np_j = np.array(norm_j)
+        temp = np_j - np_i
+        return np.sqrt((temp * temp).sum())
+
+    def RS(i):
+        s = 0
+        for j in range(user_size):
+            s += dis(i, j)
+        return s
+
+    def get_SRS():
+        srs = []
+        for i in range(user_size):
+            srs.append((RS(i), i))
+        srs.sort(key=lambda x: x[0])
+        return srs
+
+    SRS = get_SRS()
+    seeds.append(SRS[0][1])
+
+    def find_l_th_seed(l):
+        S = []
+        for i in range(user_size):
+            g = []
+            for j in range(l - 1):
+                g.append(dis(i, SRS[j][1]))
+            S.append((min(g), i))
+        S.sort(key=lambda x: x[0])
+        SDV = S
+        alfa = 0.6
+        NDDI = []
+        index_SRS = [x[1] for x in SRS]
+        index_SDV = [x[1] for x in SDV]
+        for i in range(user_size):
+            NDDI.append(alfa * index_SDV.index(i) + (1 - alfa) * index_SRS.index(i))
+        return NDDI.index(min(NDDI))
+
+    for i in range(1, size):
+        seeds.append(find_l_th_seed(i))
     return seeds
 
 
@@ -44,8 +96,8 @@ def get_initial_seeds_randomly(original_ratings, random_size):
 
 
 def get_best_initial_seeds(original_ratings, size, mode, try_time=10):
-    if mode == 'dsort':
-        try_time = 1
+    if mode in ['dsort', 'density']:
+        return get_initial_seeds(original_ratings, size, mode)
     seeds_list = []
     loss_list = []
     for i in range(try_time):
