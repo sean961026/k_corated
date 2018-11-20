@@ -30,7 +30,7 @@ def get_initial_seeds_by_dsort(original_ratings, size):
             end = len(index) - 1
         else:
             end = start + slice_size - 1
-        seed = (start + end) // 2
+        seed = end
         seeds.append(seed)
     return seeds
 
