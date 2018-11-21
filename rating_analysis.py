@@ -38,14 +38,14 @@ def ratia_analysis(original_ratings):
         temp_count = get_count(item)
         items_count.append(temp_count)
         all_count = list(np.array(all_count) + np.array(temp_count))
-    for i in range(rating_scale):
-        plt.figure()
-        label = 'portion of %s' % (i + 1)
-        x = [i for i in range(item_size)]
-        y = [temp_count[i] / sum(temp_count) for temp_count in items_count]
-        plt.plot(x, y, label=label)
-        plt.legend()
-        plt.savefig('items_portion_%s.jpg' % (i + 1))
+    # for i in range(rating_scale):
+    #     plt.figure()
+    #     label = 'portion of %s' % (i + 1)
+    #     x = [i for i in range(item_size)]
+    #     y = [temp_count[i] / sum(temp_count) for temp_count in items_count]
+    #     plt.plot(x, y, label=label)
+    #     plt.legend()
+    #     plt.savefig('items_portion_%s.jpg' % (i + 1))
     logging.info([i / sum(all_count) for i in all_count])
 
 
