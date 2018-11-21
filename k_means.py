@@ -372,7 +372,7 @@ def main():
     mode = args.mode
     need_analysis = args.analysis
     global alfa
-    alfa = args.p
+    alfa = args.parameter
     Cluster.original_ratings = original_ratings
     if k != 0:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
