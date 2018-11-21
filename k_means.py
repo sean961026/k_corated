@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-alfa = 0
-
 
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
@@ -71,7 +69,7 @@ def get_initial_seeds_by_density(original_ratings, size):
         S.extend(compensation)
         S.sort(key=lambda x: x[0])
         SDV = S
-        global alfa
+        alfa = 0.1
         NDDI = []
         index_SRS = [x[1] for x in SRS]
         index_SDV = [x[1] for x in SDV]
@@ -329,36 +327,18 @@ def k_means(seeds, threshold=5000):
 
 
 def find_best_k(original_ratings, mode):
-    if mode == 'density':
-        plt.figure()
-        for temp_alfa in [0.1, 0.15, 0.2, 0.25]:
-            global alfa
-            alfa = temp_alfa
-            k_list = [i for i in range(10, 150, 5)]
-            k_list.extend([200, 300])
-            loss_list = []
-            for k in k_list:
-                best_seeds = get_best_initial_seeds(original_ratings, k, mode)
-                clusters = k_means(best_seeds)
-                loss_list.append(loss_of_clusters(clusters))
-            plt.plot(k_list, loss_list, marker='*', label='alfa=%s' % temp_alfa)
-        plt.legend()
-        plt.xlabel('k')
-        plt.ylabel('loss')
-        plt.savefig('k_loss.jpg')
-    else:
-        k_list = [i for i in range(10, 150, 5)]
-        k_list.extend([200, 300])
-        loss_list = []
-        for k in k_list:
-            best_seeds = get_best_initial_seeds(original_ratings, k, mode)
-            clusters = k_means(best_seeds)
-            loss_list.append(loss_of_clusters(clusters))
-        plt.figure()
-        plt.plot(k_list, loss_list, marker='*')
-        plt.xlabel('k')
-        plt.ylabel('loss')
-        plt.savefig('k_loss.jpg')
+    k_list = [i for i in range(10, 150, 5)]
+    k_list.extend([200, 300])
+    loss_list = []
+    for k in k_list:
+        best_seeds = get_best_initial_seeds(original_ratings, k, mode)
+        clusters = k_means(best_seeds)
+        loss_list.append(loss_of_clusters(clusters))
+    plt.figure()
+    plt.plot(k_list, loss_list, marker='*')
+    plt.xlabel('k')
+    plt.ylabel('loss')
+    plt.savefig('k_loss.jpg')
 
 
 def dump_clusters(clusters, k):
@@ -387,14 +367,11 @@ def main():
     parser.add_argument('-k', type=int, required=True)
     parser.add_argument('-m', '--mode', required=True)
     parser.add_argument('-a', '--analysis', action='store_true')
-    parser.add_argument('-p', '--parameter', type=float)
     args = parser.parse_args()
     original_ratings = load(get_ratings_name_from_dataset(args.database))
     k = args.k
     mode = args.mode
     need_analysis = args.analysis
-    global alfa
-    alfa = args.parameter
     Cluster.original_ratings = original_ratings
     if k != 0:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
