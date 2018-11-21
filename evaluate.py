@@ -12,20 +12,25 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     test_set = np.loadtxt(directory + dataset + '.test', delimiter='\t')
     size = test_set.shape[0]
     total = 0
-    diff = [0] * rating_scale
-    count = {'normal': diff.copy(), 'over': diff.copy(), 'below': diff.copy(), 'exception': diff.copy()}
-    pd_count = {'normal': diff.copy(), 'over': diff.copy(), 'below': diff.copy(), 'exception': diff.copy()}
+    count_data = {'num': 0, 'ratings': [0] * rating_scale, 'diff': [0] * rating_scale, 'rmse': 0}
+    count = {'normal': count_data.copy(), 'over': count_data.copy(), 'below': count_data.copy(),
+             'exception': count_data.copy()}
     for i in range(size):
         record = test_set[i, :]
         test_user = int(record[0] - 1)
         test_item = int(record[1] - 1)
         test_rating = record[2]
         predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbor_fun, neighbor_para)
-        count[des][abs(int(predicted_rating - test_rating))] += 1
-        pd_count[des][predicted_rating - 1] += 1
-        total += (test_rating - predicted_rating) ** 2
+        count[des]['num'] += 1
+        count[des]['ratings'][predicted_rating - 1] += 1
+        count[des]['diff'][abs(int(predicted_rating - test_rating))] += 1
+        temp = (test_rating - predicted_rating) ** 2
+        count[des]['rmse'] += temp
+        total += temp
     count['RMSE'] = math.sqrt(total / size)
-    return count, pd_count
+    for des in ['normal', 'over', 'below', 'exception']:
+        count[des]['rmse'] = math.sqrt(count[des]['rmse'] / count[des]['num'])
+    return count
 
 
 def init(data_set):
@@ -51,13 +56,11 @@ def main():
     def rmse(webname):
         web = load(webname)
         if top and threshold is None:
-            count, pd_count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
-            logging.info('diff count:%s ', count)
-            logging.info('rating count:%s', pd_count)
+            count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
+            logging.info('count:%s ', count)
         elif threshold and top is None:
-            count, pd_count = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
-            logging.info('diff count:%s ', count)
-            logging.info('rating count:%s', pd_count)
+            count = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
+            logging.info('count:%s ', count)
 
     if web_name != 'all':
         rmse(web_name)
