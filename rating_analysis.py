@@ -26,8 +26,9 @@ def ratia_analysis(original_ratings):
     def get_count(vector):
         count = [0] * rating_scale
         for i in vector:
-            index = int(i) - 1
-            count[index] += 1
+            if i != 0:
+                index = int(i) - 1
+                count[index] += 1
         return count
 
     all_count = [0] * rating_scale
