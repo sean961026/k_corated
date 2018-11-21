@@ -78,7 +78,7 @@ def k_corating_slice(sorted_ratings, myslice, items_to_keep=None):  # [start,end
         for item_id in items_need_to_rate:
             for record in part_ratings:
                 if record[item_id] == unknown_rating:
-                    record[item_id] = round(
+                    record[item_id] = int(
                         pd_rating(original_ratings, int(record[-1] - 1), item_id, web, neighbor_fun, neighbor_para)[0])
     else:
         for item_id in items_need_to_rate:
@@ -88,7 +88,7 @@ def k_corating_slice(sorted_ratings, myslice, items_to_keep=None):  # [start,end
             else:
                 for record in part_ratings:
                     if record[item_id] == unknown_rating:
-                        record[item_id] = round(
+                        record[item_id] = int(
                             pd_rating(original_ratings, int(record[-1] - 1), item_id, web, neighbor_fun, neighbor_para)[
                                 0])
 
