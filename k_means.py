@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+alfa = 0
 
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
@@ -69,7 +70,7 @@ def get_initial_seeds_by_density(original_ratings, size):
         S.extend(compensation)
         S.sort(key=lambda x: x[0])
         SDV = S
-        alfa = 0.3
+        global alfa
         NDDI = []
         index_SRS = [x[1] for x in SRS]
         index_SDV = [x[1] for x in SDV]
@@ -78,7 +79,6 @@ def get_initial_seeds_by_density(original_ratings, size):
         return NDDI.index(min(NDDI))
 
     for i in range(2, size + 1):
-        logging.info('selecting %sth seed', i)
         seeds.append(find_l_th_seed(i))
     logging.info(seeds)
     return seeds
@@ -365,11 +365,14 @@ def main():
     parser.add_argument('-k', type=int, required=True)
     parser.add_argument('-m', '--mode', required=True)
     parser.add_argument('-a', '--analysis', action='store_true')
+    parser.add_argument('-p', '--parameter', type=float)
     args = parser.parse_args()
     original_ratings = load(get_ratings_name_from_dataset(args.database))
     k = args.k
     mode = args.mode
     need_analysis = args.analysis
+    global alfa
+    alfa = args.p
     Cluster.original_ratings = original_ratings
     if k != 0:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
