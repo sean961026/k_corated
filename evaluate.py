@@ -4,6 +4,7 @@ import numpy as np
 import math
 import argparse
 import logging
+from copy import deepcopy
 
 original_ratings = None
 
@@ -13,8 +14,8 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     size = test_set.shape[0]
     total = 0
     count_data = {'num': 0, 'ratings': [0] * rating_scale, 'diff': [0] * rating_scale, 'rmse': 0}
-    count = {'normal': count_data.copy(), 'over': count_data.copy(), 'below': count_data.copy(),
-             'exception': count_data.copy()}
+    count = {'normal': deepcopy(count_data), 'over': deepcopy(count_data), 'below': deepcopy(count_data),
+             'exception': deepcopy(count_data)}
     for i in range(size):
         record = test_set[i, :]
         test_user = int(record[0] - 1)
