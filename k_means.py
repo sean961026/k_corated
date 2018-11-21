@@ -69,7 +69,7 @@ def get_initial_seeds_by_density(original_ratings, size):
         S.extend(compensation)
         S.sort(key=lambda x: x[0])
         SDV = S
-        alfa = 0.6
+        alfa = 0.1
         NDDI = []
         index_SRS = [x[1] for x in SRS]
         index_SDV = [x[1] for x in SDV]
