@@ -14,6 +14,7 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     total = 0
     diff = [0] * rating_scale
     count = {'normal': diff.copy(), 'over': diff.copy(), 'below': diff.copy(), 'exception': diff.copy()}
+    pd_count = {'normal': diff.copy(), 'over': diff.copy(), 'below': diff.copy(), 'exception': diff.copy()}
     for i in range(size):
         record = test_set[i, :]
         test_user = int(record[0] - 1)
@@ -21,9 +22,10 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         test_rating = record[2]
         predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbor_fun, neighbor_para)
         count[des][abs(int(predicted_rating - test_rating))] += 1
+        pd_count[des][predicted_rating - 1] += 1
         total += (test_rating - predicted_rating) ** 2
     count['RMSE'] = math.sqrt(total / size)
-    return count
+    return count, pd_count
 
 
 def init(data_set):
@@ -49,11 +51,13 @@ def main():
     def rmse(webname):
         web = load(webname)
         if top and threshold is None:
-            count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
-            logging.info('%s:%s ', web_name, count)
+            count, pd_count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
+            logging.info('diff count:%s ', count)
+            logging.info('rating count:%s', pd_count)
         elif threshold and top is None:
-            count = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
-            logging.info('%s:%s', web_name, count)
+            count, pd_count = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
+            logging.info('diff count:%s ', count)
+            logging.info('rating count:%s', pd_count)
 
     if web_name != 'all':
         rmse(web_name)
