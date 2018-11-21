@@ -8,6 +8,7 @@ import os
 
 alfa = 0
 
+
 def get_initial_seeds(original_ratings, size, mode):
     if mode == 'random':
         seeds = get_initial_seeds_randomly(original_ratings, size)
@@ -328,18 +329,36 @@ def k_means(seeds, threshold=5000):
 
 
 def find_best_k(original_ratings, mode):
-    k_list = [i for i in range(20, 150, 10)]
-    k_list.extend([200, 300, 400])
-    loss_list = []
-    for k in k_list:
-        best_seeds = get_best_initial_seeds(original_ratings, k, mode)
-        clusters = k_means(best_seeds)
-        loss_list.append(loss_of_clusters(clusters))
-    plt.figure()
-    plt.plot(k_list, loss_list)
-    plt.savefig('k_loss.jpg')
-    logging.info(k_list)
-    logging.info(loss_list)
+    if mode == 'density':
+        plt.figure()
+        for temp_alfa in [0.1, 0.15, 0.2, 0.25]:
+            global alfa
+            alfa = temp_alfa
+            k_list = [i for i in range(10, 150, 5)]
+            k_list.extend([200, 300])
+            loss_list = []
+            for k in k_list:
+                best_seeds = get_best_initial_seeds(original_ratings, k, mode)
+                clusters = k_means(best_seeds)
+                loss_list.append(loss_of_clusters(clusters))
+            plt.plot(k_list, loss_list, marker='*', label='alfa=%s' % temp_alfa)
+        plt.legend()
+        plt.xlabel('k')
+        plt.ylabel('loss')
+        plt.savefig('k_loss.jpg')
+    else:
+        k_list = [i for i in range(10, 150, 5)]
+        k_list.extend([200, 300])
+        loss_list = []
+        for k in k_list:
+            best_seeds = get_best_initial_seeds(original_ratings, k, mode)
+            clusters = k_means(best_seeds)
+            loss_list.append(loss_of_clusters(clusters))
+        plt.figure()
+        plt.plot(k_list, loss_list, marker='*')
+        plt.xlabel('k')
+        plt.ylabel('loss')
+        plt.savefig('k_loss.jpg')
 
 
 def dump_clusters(clusters, k):
