@@ -83,7 +83,6 @@ def get_initial_seeds_by_density(original_ratings, size):
 
     for i in range(2, size + 1):
         seeds.append(find_l_th_seed(i))
-    logging.info(seeds)
     return seeds
 
 
