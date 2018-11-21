@@ -4,6 +4,7 @@ import pandas as pd
 import argparse
 import os
 import math
+import random
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -239,7 +240,7 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_pa
         elif predicted_rating < min_rating:
             des = 'below'
     except:
-        predicted_rating = user_mean
+        predicted_rating = user_mean + random.normalvariate(0, 1)
         des = 'exception'
 
     def trans(num):
