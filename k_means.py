@@ -329,7 +329,8 @@ def k_means(seeds, threshold=5000):
 
 
 def find_best_k(original_ratings, mode):
-    k_list = [i for i in range(70, 110, 10)]
+    k_list = [i for i in range(20, 150, 10)]
+    k_list.extend([200, 300, 400])
     loss_list = []
     for k in k_list:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
