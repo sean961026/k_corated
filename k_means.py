@@ -75,7 +75,8 @@ def get_initial_seeds_by_density(original_ratings, size):
         index_SRS = [x[1] for x in SRS]
         index_SDV = [x[1] for x in SDV]
         for i in range(user_size):
-            NDDI.append(alfa * index_SDV.index(i) + (1 - alfa) * index_SRS.index(i))
+            if i not in seeds:
+                NDDI.append(alfa * index_SDV.index(i) + (1 - alfa) * index_SRS.index(i))
         return NDDI.index(min(NDDI))
 
     for i in range(2, size + 1):
