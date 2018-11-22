@@ -89,7 +89,6 @@ def main():
         for web_name in web_names:
             y = []
             for temp_top in temp_tops:
-                global top
                 top = temp_top
                 count = rmse(web_name)
                 y.append(count['RMSE'])
