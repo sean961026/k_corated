@@ -142,7 +142,6 @@ def entropic_de(scores):
 def de_attack_to_record(record_index):
     aux = generate_aux(record_index)
     target_index = o2k(record_index)
-    target_score = score(aux, attack_ratings[target_index, :])
     scores = get_scores(aux)
     data = analyze_scores(scores)
     threshold = data['threshold']
@@ -156,7 +155,7 @@ def de_attack_to_record(record_index):
         case = 2
     else:
         case = 3
-    return case, scores, target_score
+    return case
 
 
 def num_of_ratings(ratings):
@@ -172,11 +171,11 @@ def num_of_ratings(ratings):
 def analyze():
     logging.info('the number of ratings of original ratings %d', num_of_ratings(original_ratings))
     logging.info('the number of ratings of attack ratings %d', num_of_ratings(attack_ratings))
-    records_2_be_attacked = random.sample([i for i in range(user_size)], 400)
+    records_2_be_attacked = random.sample([i for i in range(user_size)], 200)
     cases = [0] * 4
     for record_index in records_2_be_attacked:
         for i in range(5):
-            case, scores, target_score = de_attack_to_record(record_index)
+            case = de_attack_to_record(record_index)
             cases[case] += 1
     portions = [case / sum(cases) for case in cases]
     logging.info(portions)
