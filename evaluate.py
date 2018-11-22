@@ -14,7 +14,7 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
     size = test_set.shape[0]
     total = 0
     count_data = {'num': 0, 'ratings': [0] * rating_scale, 'diff': [0] * rating_scale, 'rmse': 0,
-                  'diff_2': {'1,3': 0, '2,4': 0, '3,5': 0}}
+                  'diff_2': {'1,3': 0, '2,4': 0, '3,5': 0, '3,1': 0, '4,2': 0, '5,3': 0}}
     count = {'normal': deepcopy(count_data), 'over': deepcopy(count_data), 'below': deepcopy(count_data),
              'exception': deepcopy(count_data)}
     for i in range(size):
@@ -30,17 +30,17 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         count[des]['rmse'] += temp
         total += temp
         if predicted_rating == 3 and test_rating == 1:
-            count[des]['diff_2']['1,3'] += 1
+            count[des]['diff_2']['3,1'] += 1
         elif predicted_rating == 1 and test_rating == 3:
             count[des]['diff_2']['1,3'] += 1
         elif predicted_rating == 2 and test_rating == 4:
             count[des]['diff_2']['2,4'] += 1
         elif predicted_rating == 4 and test_rating == 2:
-            count[des]['diff_2']['2,4'] += 1
+            count[des]['diff_2']['4,2'] += 1
         elif predicted_rating == 3 and test_rating == 5:
             count[des]['diff_2']['3,5'] += 1
         elif predicted_rating == 5 and test_rating == 3:
-            count[des]['diff_2']['3,5'] += 1
+            count[des]['diff_2']['5,3'] += 1
     count['RMSE'] = math.sqrt(total / size)
     for des in ['normal', 'over', 'below', 'exception']:
         count[des]['rmse'] = math.sqrt(count[des]['rmse'] / count[des]['num'])
