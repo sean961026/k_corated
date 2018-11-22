@@ -79,7 +79,7 @@ def analyze_scores(scores):
     temp.remove(max1)
     max2 = max(temp)
     if std == 0:
-        threshold = 0.5
+        threshold = 0
     else:
         threshold = (max1 - max2) / std
     return {'max1': max1, 'max2': max2, 'std': std, 'threshold': threshold}
@@ -146,8 +146,7 @@ def de_attack_to_record(record_index):
     scores = get_scores(aux)
     data = analyze_scores(scores)
     threshold = data['threshold']
-    best_id = scores.index(data['max1'])
-    match = best_id == target_index
+    match = data['max1'] == scores[target_index]
     enough = threshold >= eccen
     if match and enough:
         case = 0
@@ -169,18 +168,16 @@ def num_of_ratings(ratings):
         num += sum(normalized)
     return num
 
+
 def analyze():
     logging.info('the number of ratings of original ratings %d', num_of_ratings(original_ratings))
     logging.info('the number of ratings of attack ratings %d', num_of_ratings(attack_ratings))
-    records_2_be_attacked = random.sample([i for i in range(user_size)], 90)
-    failed_scores = []
+    records_2_be_attacked = random.sample([i for i in range(user_size)], 400)
     cases = [0] * 4
     for record_index in records_2_be_attacked:
-        for i in range(10):
+        for i in range(5):
             case, scores, target_score = de_attack_to_record(record_index)
             cases[case] += 1
-            if case != 0:
-                failed_scores.append((scores, target_score))
     portions = [case / sum(cases) for case in cases]
     logging.info(portions)
 
