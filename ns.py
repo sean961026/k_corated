@@ -286,7 +286,7 @@ def init():
     parser.add_argument('-t', '--total', required=True, type=int)
     parser.add_argument('-c', '--correct', required=True, type=int)
     parser.add_argument('-e', '--eccen', type=float)
-    parser.add_argument('-m,', '--mode', choices=mode_choices)
+    parser.add_argument('-m,', '--mode', choices=mode_choices, default='exp')
     parser.add_argument('-w', '--weight', choices=['equal', 'less'], default='less')
     args = parser.parse_args()
     weight_mode = args.weight
