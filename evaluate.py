@@ -5,6 +5,7 @@ import math
 import argparse
 import logging
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 original_ratings = None
 
@@ -71,17 +72,30 @@ def main():
         web = load(webname)
         if top and threshold is None:
             count = RMSE(data_set, web, nearest_neighbors_by_fix_number, top)
-            logging.info('count:%s ', count)
+            return count
         elif threshold and top is None:
             count = RMSE(data_set, web, neareast_neighbors_by_threshold, threshold)
-            logging.info('count:%s ', count)
+            return count
 
     if web_name != 'all':
-        rmse(web_name)
+        count = rmse(web_name)
+        logging.info(count)
     else:
         web_names = get_all_web_files(suffix)
+        temp_tops = [5, 10, 15, 20, 25, 40, 50, 60]
+        plt.figure()
+        plt.xlabel('top')
+        plt.ylabel('RMSE')
         for web_name in web_names:
-            rmse(web_name)
+            y = []
+            for temp_top in temp_tops:
+                global top
+                top = temp_top
+                count = rmse(web_name)
+                y.append(count['RMSE'])
+            plt.plot(temp_tops, y, marker='*', label=web_name)
+        plt.legend()
+        plt.savefig('RMSE-evaluation.jpg')
 
 
 if __name__ == '__main__':
