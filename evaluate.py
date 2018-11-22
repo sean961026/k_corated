@@ -82,7 +82,7 @@ def main():
         logging.info(count)
     else:
         web_names = get_all_web_files(suffix)
-        temp_tops = [5, 10, 15, 20, 25, 40, 50, 60]
+        temp_tops = [5, 10, 15, 20, 25, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
         plt.figure()
         plt.xlabel('top')
         plt.ylabel('RMSE')
