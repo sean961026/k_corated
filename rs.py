@@ -244,13 +244,13 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_pa
         des = 'exception'
 
     def trans(num):
-        if num <= 1:
+        if num <= 1.5:
             return 1
-        elif num > 1 and num <= 2:
+        elif num > 1.5 and num <= 2.5:
             return 2
-        elif num > 2 and num <= 3:
+        elif num > 2.5 and num <= 3.5:
             return 3
-        elif num > 3 and num <= 4:
+        elif num > 3.5 and num <= 4:
             return 4
         else:
             return 5
