@@ -4,7 +4,6 @@ import pandas as pd
 import argparse
 import os
 import math
-import random
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -194,15 +193,6 @@ def weight_trust_co(user_1, user_2, threshold):
         return w
 
 
-def neareast_neighbors_by_threshold(candidates, user_id, web, threshold):
-    weights = web[user_id, :]
-    neighbors = []
-    for i in candidates:
-        if weights[i] != unknown_weight and weights[i] > threshold and i != user_id:
-            neighbors.append(i)
-    return neighbors
-
-
 def nearest_neighbors_by_fix_number(candidates, user_id, web, n):
     weights = web[user_id, :]
     neighbors = []
@@ -245,22 +235,21 @@ def load(filename):
     return matrix
 
 
-def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_para):
+def pd_rating(original_ratings, user_id, item_id, web, best_top=80):
     user = original_ratings[user_id, :]
     user_mean = mean(user)
     up = 0
     down = 0
     candidates = supp_item(original_ratings[:, item_id])
-    neighbors = neighbor_fun(candidates, user_id, web, neighbor_para)
+    neighbors = nearest_neighbors_by_fix_number(candidates, user_id, web, best_top)
     for neighbor_id in neighbors:
         neighbor = original_ratings[neighbor_id, :]
         neighbor_mean = mean(neighbor)
         neighbor_rating = neighbor[item_id]
         diff = neighbor_rating - neighbor_mean
         weight = web[user_id, neighbor_id]
-        if neighbor_rating != unknown_rating and weight != unknown_weight:
-            up += weight * diff
-            down += weight
+        up += weight * diff
+        down += weight
     des = 'normal'
     try:
         predicted_rating = user_mean + up / down
@@ -275,16 +264,11 @@ def pd_rating(original_ratings, user_id, item_id, web, neighbor_fun, neighbor_pa
     return predicted_rating, des
 
 
-def get_all_web_files(suffix=None):
+def get_all_web_files():
     web_files = []
-    if suffix:
-        for file in os.listdir('.'):
-            if file.startswith('web') and file.endswith(suffix):
-                web_files.append(file)
-    else:
-        for file in os.listdir('.'):
-            if file.startswith('web'):
-                web_files.append(file)
+    for file in os.listdir('.'):
+        if file.startswith('web'):
+            web_files.append(file)
     return web_files
 
 
@@ -293,7 +277,10 @@ def get_ratings_name_from_dataset(dataset):
 
 
 def get_web_name_from_attr(mode, threshold):
-    return 'web_' + mode + '_' + str(threshold) + '.csv'
+    if mode.endswith('co'):
+        return 'web_' + mode + '_' + str(threshold) + '.csv'
+    else:
+        return 'web_' + mode + '.csv'
 
 
 def extract_dataset_from_filename(filename):

@@ -1,5 +1,5 @@
-from rs import pd_rating, load, directory, nearest_neighbors_by_fix_number, dataset_choices, get_all_web_files, \
-    rating_scale, get_ratings_name_from_dataset
+from rs import pd_rating, load, directory, dataset_choices, get_all_web_files, rating_scale, \
+    get_ratings_name_from_dataset
 import numpy as np
 import math
 import argparse
@@ -7,10 +7,8 @@ import logging
 from copy import deepcopy
 import matplotlib.pyplot as plt
 
-original_ratings = None
 
-
-def adapter(num, type=0):
+def adapter(num, type='round'):
     def fix(data):
         if data < 1:
             return 1
@@ -22,6 +20,8 @@ def adapter(num, type=0):
         return fix(int(num))
     elif type == 'round':
         return fix(int(round(num)))
+    elif type == 'int1':
+        return fix(int(num) + 1)
     elif type == 'customize':
         if num <= 1.3:
             return 1
@@ -38,6 +38,7 @@ def adapter(num, type=0):
 
 
 def RMSE(dataset, web, top, adapter_kind):
+    original_ratings = load(get_ratings_name_from_dataset(dataset))
     test_set = np.loadtxt(directory + dataset + '.test', delimiter='\t')
     size = test_set.shape[0]
     total = 0
@@ -49,8 +50,7 @@ def RMSE(dataset, web, top, adapter_kind):
         test_user = int(record[0] - 1)
         test_item = int(record[1] - 1)
         test_rating = record[2]
-        predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, nearest_neighbors_by_fix_number,
-                                          top)
+        predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, top)
         predicted_rating = adapter(predicted_rating, adapter_kind)
         count[des]['num'] += 1
         count[des]['ratings'][predicted_rating - 1] += 1
@@ -64,11 +64,6 @@ def RMSE(dataset, web, top, adapter_kind):
     return count
 
 
-def init(data_set):
-    global original_ratings
-    original_ratings = load(get_ratings_name_from_dataset(data_set))
-
-
 def main():
     parser = argparse.ArgumentParser(description='RMSE test for a certain dataset')
     parser.add_argument('-d', '--dataset', required=True, choices=dataset_choices)
@@ -80,13 +75,13 @@ def main():
     web_name = args.web
     top = args.top
     adapter_kind = args.adapter
-    init(data_set)
-    temp_tops = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
+    temp_tops = [5, 10, 20, 40, 60, 70, 80, 90, 100]
     if web_name == 'all' and adapter_kind != 'all':
         web_names = get_all_web_files()
         plt.figure()
         plt.xlabel('top')
         plt.ylabel('RMSE')
+        plt.title('adapter:%s' % adapter_kind)
         for web_name in web_names:
             y = []
             web = load(web_name)
@@ -95,12 +90,13 @@ def main():
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=web_name)
         plt.legend()
-        plt.savefig('RMSE-evaluation-webs.jpg')
+        plt.savefig('top-RMSE-webs.jpg')
     elif web_name != 'all' and adapter_kind == 'all':
-        adapter_kinds = ['int', 'round', 'customize']
+        adapter_kinds = ['int', 'round', 'customize', 'int1']
         plt.figure()
         plt.xlabel('top')
         plt.ylabel('RMSE')
+        plt.title('web:%s' % web_name)
         web = load(web_name)
         for adapter_kind in adapter_kinds:
             y = []
@@ -109,12 +105,11 @@ def main():
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=adapter_kind)
         plt.legend()
-        plt.savefig('RMSE-evaluation-adapters.jpg')
+        plt.savefig('top-RMSE-adapters.jpg')
     elif web_name != 'all' and adapter_kind != 'all':
         logging.info(RMSE(data_set, load(web_name), top, adapter_kind))
     else:
         raise ValueError
-
 
 
 if __name__ == '__main__':
