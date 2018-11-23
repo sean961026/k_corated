@@ -37,9 +37,7 @@ def adapter(num, type='round'):
         raise ValueError
 
 
-def RMSE(dataset, web, top, adapter_kind):
-    original_ratings = load(get_ratings_name_from_dataset(dataset))
-    test_set = np.loadtxt(directory + dataset + '.test', delimiter='\t')
+def RMSE(test_set, original_ratings, web, top, adapter_kind):
     size = test_set.shape[0]
     total = 0
     count_data = {'num': 0, 'ratings': [0] * rating_scale, 'diff': [0] * rating_scale, 'rmse': 0}
@@ -76,6 +74,8 @@ def main():
     top = args.top
     adapter_kind = args.adapter
     temp_tops = [5, 10, 20, 40, 60, 70, 80, 90, 100]
+    original_ratings = load(get_ratings_name_from_dataset(data_set))
+    test_set = np.loadtxt(directory + data_set + '.test', delimiter='\t')
     if web_name == 'all' and adapter_kind != 'all':
         web_names = get_all_web_files()
         plt.figure()
@@ -86,7 +86,7 @@ def main():
             y = []
             web = load(web_name)
             for temp_top in temp_tops:
-                count = RMSE(data_set, web, temp_top, adapter_kind)
+                count = RMSE(test_set, original_ratings, web, temp_top, adapter_kind)
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=web_name)
         plt.legend()
@@ -101,13 +101,13 @@ def main():
         for adapter_kind in adapter_kinds:
             y = []
             for temp_top in temp_tops:
-                count = RMSE(data_set, web, temp_top, adapter_kind)
+                count = RMSE(test_set, original_ratings, web, temp_top, adapter_kind)
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=adapter_kind)
         plt.legend()
         plt.savefig('top-RMSE-adapters.jpg')
     elif web_name != 'all' and adapter_kind != 'all':
-        logging.info(RMSE(data_set, load(web_name), top, adapter_kind))
+        logging.info(RMSE(test_set, original_ratings, load(web_name), top, adapter_kind))
     else:
         raise ValueError
 
