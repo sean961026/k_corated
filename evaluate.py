@@ -97,7 +97,7 @@ def main():
         plt.figure()
         plt.xlabel('top')
         plt.ylabel('RMSE')
-        plt.title('web:%s' % web_name)
+        plt.title('%s' % web_name)
         web = load(web_name)
         for adapter_kind in adapter_kinds:
             y = []
