@@ -78,8 +78,25 @@ def main():
             return count
 
     if web_name != 'all':
-        count = rmse(web_name)
-        logging.info(count)
+        if threshold == 0:
+            temp_thresholds = [i for i in range(5, 40, 5)]
+            temp_tops = [5, 10, 15, 20, 25, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
+            plt.figure()
+            plt.xlabel('top')
+            plt.ylabel('RMSE')
+            for temp_threshold in temp_thresholds:
+                y = []
+                threshold = temp_threshold
+                for temp_top in temp_tops:
+                    top = temp_top
+                    count = rmse(web_name)
+                    y.append(count['RMSE'])
+                plt.plot(temp_tops, y, marker='*', label='threshold=%s' % temp_threshold)
+            plt.legend()
+            plt.savefig('RMSE-evaluation-1.jpg')
+        else:
+            count = rmse(web_name)
+            logging.info(count)
     else:
         web_names = get_all_web_files(suffix)
         temp_tops = [5, 10, 15, 20, 25, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
@@ -94,7 +111,7 @@ def main():
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=web_name)
         plt.legend()
-        plt.savefig('RMSE-evaluation.jpg')
+        plt.savefig('RMSE-evaluation-2.jpg')
 
 
 if __name__ == '__main__':
