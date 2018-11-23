@@ -128,6 +128,8 @@ def main():
             plt.legend()
             plt.savefig('RMSE-evaluation.jpg')
         else:
+            global adapter_type
+            adapter_type = adapter_index
             count = rmse(web_name)
             logging.info(count)
     else:
