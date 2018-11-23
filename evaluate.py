@@ -8,7 +8,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 
 original_ratings = None
-adapter_type = None
+adapter_type = 2
 
 
 def adapter(num, type=0):
