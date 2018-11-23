@@ -25,11 +25,11 @@ def adapter(num, type='round'):
     elif type == 'customize':
         if num <= 1.3:
             return 1
-        elif num > 1.3 and num <= 2.6:
+        elif 1.3 < num <= 2.6:
             return 2
-        elif num > 2.6 and num <= 3.6:
+        elif 2.6 < num <= 3.6:
             return 3
-        elif num > 3.6 and num <= 4.2:
+        elif 3.6 < num <= 4.2:
             return 4
         else:
             return 5
