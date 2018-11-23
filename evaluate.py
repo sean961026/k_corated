@@ -86,6 +86,7 @@ def main():
             y = []
             web = load(web_name)
             for temp_top in temp_tops:
+                logging.info({'web': web_name, 'top': temp_top, 'adapter': adapter_kind})
                 count = RMSE(test_set, original_ratings, web, temp_top, adapter_kind)
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=web_name)
@@ -101,6 +102,7 @@ def main():
         for adapter_kind in adapter_kinds:
             y = []
             for temp_top in temp_tops:
+                logging.info({'web': web_name, 'top': temp_top, 'adapter': adapter_kind})
                 count = RMSE(test_set, original_ratings, web, temp_top, adapter_kind)
                 y.append(count['RMSE'])
             plt.plot(temp_tops, y, marker='*', label=adapter_kind)
