@@ -52,8 +52,10 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         test_item = int(record[1] - 1)
         test_rating = record[2]
         predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, neighbor_fun, neighbor_para)
+        global adapter_type
         predicted_rating = adapter(predicted_rating, adapter_type)
         count[des]['num'] += 1
+        logging.info(type(predicted_rating))
         count[des]['ratings'][predicted_rating - 1] += 1
         count[des]['diff'][abs(int(predicted_rating - test_rating))] += 1
         temp = (test_rating - predicted_rating) ** 2
