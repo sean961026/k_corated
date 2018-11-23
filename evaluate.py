@@ -55,7 +55,6 @@ def RMSE(dataset, web, neighbor_fun, neighbor_para):
         global adapter_type
         predicted_rating = adapter(predicted_rating, adapter_type)
         count[des]['num'] += 1
-        logging.info(type(predicted_rating))
         count[des]['ratings'][predicted_rating - 1] += 1
         count[des]['diff'][abs(int(predicted_rating - test_rating))] += 1
         temp = (test_rating - predicted_rating) ** 2
@@ -119,6 +118,7 @@ def main():
             for adapter_index in [0, 1, 2]:
                 y = []
                 global adapter_type
+                logging.info('adapter:%d', adapter_index)
                 adapter_type = adapter_index
                 for temp_top in temp_tops:
                     top = temp_top
