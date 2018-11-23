@@ -16,7 +16,8 @@ max_rating = 5
 rating_scale = max_rating - min_rating + 1
 ml_user_size = 943
 ml_item_size = 1682
-mode_branches = ['distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co']
+mode_branches = ['distance_co', 'correlation_co', 'trust_co', 'cos_co', 'tanimoto_co', 'distance_fill',
+                 'correlation_fill', 'trust_fill', 'cos_fill', 'tanimoto_fill']
 mode_choices = ['all'] + mode_branches
 dataset_choices = ['u1', 'u2', 'u3', 'u4', 'u5']
 unknown_rating = 0
@@ -61,6 +62,17 @@ def co_rated_part(user_1, user_2):
     return u1, u2
 
 
+def fill(user):
+    mean_user = mean(user)
+    temp = []
+    for i in range(len(user)):
+        if user[i] == unknown_rating:
+            temp.append(mean_user)
+        else:
+            temp.append(user[i])
+    return np.array(temp)
+
+
 def co_bought_users(item1, item2):
     return list(supp_item(item1).intersection(supp_item(item2)))
 
@@ -74,6 +86,8 @@ def mean(user):
 
 
 def weight(user_1, user_2, mode, co_threshold):
+    fill_u1 = fill(user_1)
+    fill_u2 = fill(user_2)
     if mode == 'distance_co':
         w = weight_distance_co(user_1, user_2, co_threshold)
     elif mode == 'correlation_co':
@@ -84,6 +98,16 @@ def weight(user_1, user_2, mode, co_threshold):
         w = weight_tanimoto_co(user_1, user_2, co_threshold)
     elif mode == 'trust_co':
         w = weight_trust_co(user_1, user_2, co_threshold)
+    elif mode == 'distance_fill':
+        w = weight_distance_co(fill_u1, fill_u2, 0)
+    elif mode == 'correlation_fill':
+        w = weight_correlation_co(fill_u1, fill_u2, 0)
+    elif mode == 'cos_fill':
+        w = weight_cos_co(fill_u1, fill_u2, 0)
+    elif mode == 'tanimoto_fill':
+        w = weight_tanimoto_co(fill_u1, fill_u2, 0)
+    elif mode == 'trust_fill':
+        w = weight_trust_co(fill_u1, fill_u2, 0)
     else:
         raise ValueError
     return w
