@@ -22,7 +22,7 @@ def adapter(num, type=0):
     if type == 0:
         return fix(int(num))
     elif type == 1:
-        return fix(round(num))
+        return fix(int(round(num)))
     elif type == 2:
         if num <= 1.3:
             return 1
