@@ -117,9 +117,11 @@ def weight_distance_co(user_1, user_2, threshold):
     corated = co_rated_items(user_1, user_2)
     if len(corated) < threshold:
         return unknown_weight
-    dis = 0
-    for i in corated:
-        dis += (user_1[i] - user_2[i]) ** 2
+    u1 = np.array([user_1[i] for i in corated])
+    u2 = np.array([user_2[i] for i in corated])
+    temp = u1 - u2
+    dis = temp * temp
+    dis = dis.sum()
     w = 1 / (1 + math.sqrt(dis))
     if w < 0 or w > 1:
         return unknown_weight
@@ -221,7 +223,10 @@ def create_web(original_ratings, mode, threshold):
         for j in range(user_size):
             user_1 = original_ratings[i, :]
             user_2 = original_ratings[j, :]
-            web[i, j] = weight(user_1, user_2, mode, threshold) if i != j else 1
+            if web[i, j] == 0:
+                temp = weight(user_1, user_2, mode, threshold) if i != j else 1
+                web[i, j] = temp
+                web[j, i] = temp
     return web
 
 
