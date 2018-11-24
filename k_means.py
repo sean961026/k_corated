@@ -96,7 +96,7 @@ def get_initial_seeds_by_dsort(original_ratings, size):
             end = len(index) - 1
         else:
             end = start + slice_size - 1
-        seed = start
+        seed = (start + end) / 2
         seeds.append(seed)
     return seeds
 
@@ -110,7 +110,7 @@ def get_initial_seeds_randomly(original_ratings, random_size):
         return random.sample(all, random_size)
 
 
-def get_best_initial_seeds(original_ratings, size, mode, try_time=10):
+def get_best_initial_seeds(original_ratings, size, mode, try_time=5):
     if mode in ['dsort', 'density']:
         return get_initial_seeds(original_ratings, size, mode)
     seeds_list = []
@@ -326,22 +326,37 @@ def k_means(seeds, threshold=5000):
     return clusters
 
 
-def find_best_k(original_ratings, mode):
-    k_list = [i for i in range(10, 150, 5)]
-    k_list.extend([200, 300])
-    loss_list = []
-    for k in k_list:
-        best_seeds = get_best_initial_seeds(original_ratings, k, mode)
-        clusters = k_means(best_seeds)
-        loss_list.append(loss_of_clusters(clusters))
+def find_best_k(original_ratings, modes):
     plt.figure()
-    plt.plot(k_list, loss_list, marker='*')
-    plt.xlabel('k')
-    plt.ylabel('loss')
-    plt.savefig('k_loss.jpg')
+    plt.xlabel('K')
+    plt.ylabel('Numbers To Be Added')
+    k_list = [10, 30, 50, 75, 100, 125, 150, 200, 250, 300]
+    density_data = []
+    random_data = []
+    for mode in modes:
+        loss_list = []
+        for k in k_list:
+            best_seeds = get_best_initial_seeds(original_ratings, k, mode)
+            clusters = k_means(best_seeds)
+            loss_list.append(loss_of_clusters(clusters))
+        if mode == 'density':
+            density_data = loss_list.copy()
+        elif mode == 'random':
+            random_data = loss_list.copy()
+        plt.plot(k_list, loss_list, marker='*', label=mode)
+    plt.legend()
+    plt.savefig('k_add_all.jpg')
+    plt.figure()
+    plt.xlabel('K')
+    plt.ylabel('Numbers To Be Added')
+    plt.plot(k_list, density_data, marker='*', label='density')
+    plt.plot(k_list, random_data, marker='*', label='random')
+    plt.legend()
+    plt.savefig('k_add.jpg')
 
 
-def dump_clusters(clusters, k):
+def dump_clusters(clusters):
+    k = len(clusters)
     with open('best_clusters_%s.txt' % k, 'w') as file:
         for cluster in clusters:
             file.write('%s' % (cluster.points) + '\n')
@@ -376,11 +391,15 @@ def main():
     if k != 0:
         best_seeds = get_best_initial_seeds(original_ratings, k, mode)
         best_clusters = k_means(best_seeds)
-        dump_clusters(best_clusters, k)
+        dump_clusters(best_clusters)
         if need_analysis:
             analysis_of_clusters(best_clusters)
     else:
-        find_best_k(original_ratings, mode)
+        if mode == 'all':
+            modes = ['density', 'dsort', 'rsort', 'random']
+        else:
+            modes = [mode]
+        find_best_k(original_ratings, modes)
 
 
 if __name__ == '__main__':
