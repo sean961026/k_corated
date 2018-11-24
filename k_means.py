@@ -80,6 +80,7 @@ def get_initial_seeds_by_density(normalized_ratings, size, dis_map=None):
 
     for i in range(2, size + 1):
         seeds.append(find_l_th_seed(i))
+    logging.info(seeds[0])
     return seeds
 
 
@@ -344,14 +345,17 @@ def find_best_k(original_ratings, normalized_ratings, modes, dis_map):
         logging.info('%s:%s', mode, loss_list)
         plt.plot(k_list, loss_list, marker='*', label=mode)
     plt.legend()
-    plt.savefig('k_add_all.jpg')
-    plt.figure()
-    plt.xlabel('K')
-    plt.ylabel('Numbers To Be Added')
-    plt.plot(k_list, density_data, marker='*', label='density')
-    plt.plot(k_list, random_data, marker='*', label='random')
-    plt.legend()
-    plt.savefig('k_add.jpg')
+    if len(modes) != 1:
+        plt.savefig('k_add_all.jpg')
+        plt.figure()
+        plt.xlabel('K')
+        plt.ylabel('Numbers To Be Added')
+        plt.plot(k_list, density_data, marker='*', label='density')
+        plt.plot(k_list, random_data, marker='*', label='random')
+        plt.legend()
+        plt.savefig('k_add.jpg')
+    else:
+        plt.savefig('k_add_%s.jpg' % modes[0])
 
 
 def dump_clusters(clusters):
@@ -361,8 +365,8 @@ def dump_clusters(clusters):
             file.write('%s' % (cluster.points) + '\n')
 
 
-def load_clusters(original_ratings, k):
-    Cluster.normalized_ratings = original_ratings
+def load_clusters(normalized_ratings, k):
+    Cluster.normalized_ratings = normalized_ratings
     clusters = []
     with open('best_clusters_%s.txt' % k, 'r') as file:
         lines = file.readlines()
@@ -397,21 +401,7 @@ def main():
     if os.path.exists('dis_map.csv'):
         dis_map = load('dis_map.csv')
     else:
-        def dis(i, j):
-            norm_i = normalized_ratings[i, :]
-            norm_j = normalized_ratings[j, :]
-            np_i = np.array(norm_i)
-            np_j = np.array(norm_j)
-            temp = np_j - np_i
-            return np.sqrt((temp * temp).sum())
-
-        user_size = original_ratings.shape[0]
-        dis_map = np.zeros(shape=(user_size, user_size))
-        for i in range(user_size):
-            logging.info('filling %dth row', i)
-            for j in range(user_size):
-                dis_map[i, j] = dis(i, j)
-        dump('dis_map.csv', dis_map)
+        dis_map = None
     if k != 0:
         best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map)
         best_clusters = k_means(best_seeds)
