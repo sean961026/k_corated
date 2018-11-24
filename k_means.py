@@ -423,7 +423,7 @@ def main():
             modes = ['density', 'dsort', 'rsort', 'random']
         else:
             modes = [mode]
-        find_best_k(original_ratings, modes)
+        find_best_k(original_ratings, normalized_ratings, modes, dis_map)
 
 
 if __name__ == '__main__':
