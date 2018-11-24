@@ -343,6 +343,7 @@ def find_best_k(original_ratings, modes):
             density_data = loss_list.copy()
         elif mode == 'random':
             random_data = loss_list.copy()
+        logging.info('%s:%s', mode, loss_list)
         plt.plot(k_list, loss_list, marker='*', label=mode)
     plt.legend()
     plt.savefig('k_add_all.jpg')

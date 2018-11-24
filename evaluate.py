@@ -91,6 +91,7 @@ def main():
                 y.append(count['RMSE'])
             if min(y) < best['RMSE']:
                 best = {'web': web_name, 'RMSE': min(y), 'top': temp_tops[y.index(min(y))]}
+            logging.info('%s:%s', web_name, y)
             plt.plot(temp_tops, y, marker='*', label=web_name)
         plt.legend()
         plt.savefig('top-RMSE-webs.jpg')
@@ -110,6 +111,7 @@ def main():
                 y.append(count['RMSE'])
             if min(y) < best['RMSE']:
                 best = {'adapter': adapter_kind, 'RMSE': min(y), 'top': temp_tops[y.index(min(y))]}
+            logging.info('%s:%s', adapter_kind, y)
             plt.plot(temp_tops, y, marker='*', label=adapter_kind)
         plt.legend()
         plt.savefig('top-RMSE-adapters.jpg')
