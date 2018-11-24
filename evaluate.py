@@ -82,6 +82,7 @@ def main():
         plt.xlabel('top')
         plt.ylabel('RMSE')
         plt.title('adapter:%s' % adapter_kind)
+        best = {'top': None, 'RMSE': 2, 'web': None, }
         for web_name in web_names:
             y = []
             web = load(web_name)
@@ -89,8 +90,12 @@ def main():
                 logging.info({'web': web_name, 'top': temp_top, 'adapter': adapter_kind})
                 count = RMSE(test_set, original_ratings, web, temp_top, adapter_kind)
                 y.append(count['RMSE'])
+            if min(y) < best['RMSE']:
+                best = {'web': web_name, 'RMSE': min(y), 'top': temp_tops[y.index(min(y))]}
             plt.plot(temp_tops, y, marker='*', label=web_name)
         plt.legend()
+        text = '%.4f,%s' % (best['RMSE'], best['web'])
+        plt.text(best['top'], best['RMSE'], text)
         plt.savefig('top-RMSE-webs.jpg')
     elif web_name != 'all' and adapter_kind == 'all':
         adapter_kinds = ['int', 'round', 'customize', 'int1']
@@ -99,14 +104,19 @@ def main():
         plt.ylabel('RMSE')
         plt.title('%s' % web_name)
         web = load(web_name)
+        best = {'top': None, 'RMSE': 2, 'adapter': None, }
         for adapter_kind in adapter_kinds:
             y = []
             for temp_top in temp_tops:
                 logging.info({'web': web_name, 'top': temp_top, 'adapter': adapter_kind})
                 count = RMSE(test_set, original_ratings, web, temp_top, adapter_kind)
                 y.append(count['RMSE'])
+            if min(y) < best['RMSE']:
+                best = {'adapter': adapter_kind, 'RMSE': min(y), 'top': temp_tops[y.index(min(y))]}
             plt.plot(temp_tops, y, marker='*', label=adapter_kind)
         plt.legend()
+        text = '%.4f,%s' % (best['RMSE'], best['adapter'])
+        plt.text(best['top'], best['RMSE'], text)
         plt.savefig('top-RMSE-adapters.jpg')
     elif web_name != 'all' and adapter_kind != 'all':
         logging.info(RMSE(test_set, original_ratings, load(web_name), top, adapter_kind))
