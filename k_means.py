@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+default_trial_times = 20
+
 
 def get_initial_seeds(original_ratings, normalized_ratings, size, mode, dis_map):
     if mode == 'random':
@@ -108,7 +110,7 @@ def get_initial_seeds_randomly(normalized_ratings, random_size):
         return random.sample(all, random_size)
 
 
-def get_best_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map, try_time=20):
+def get_best_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map, try_time):
     if mode in ['dsort', 'density']:
         return get_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map)
     seeds_list = []
@@ -324,7 +326,7 @@ def k_means(seeds, threshold=5000):
     return clusters
 
 
-def find_best_k(original_ratings, normalized_ratings, modes, dis_map):
+def find_best_k(original_ratings, normalized_ratings, modes, dis_map, trial_time):
     plt.figure()
     plt.xlabel('K')
     plt.ylabel('Numbers To Be Added')
@@ -334,7 +336,7 @@ def find_best_k(original_ratings, normalized_ratings, modes, dis_map):
     for mode in modes:
         loss_list = []
         for k in k_list:
-            best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map)
+            best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map, trial_time)
             clusters = k_means(best_seeds)
             loss_list.append(loss_of_clusters(clusters))
         if mode == 'density':
@@ -384,8 +386,10 @@ def main():
     parser.add_argument('-k', type=int, required=True)
     parser.add_argument('-m', '--mode', required=True)
     parser.add_argument('-a', '--analysis', action='store_true')
+    parser.add_argument('-t', '--trial', type=int, default=default_trial_times)
     args = parser.parse_args()
     original_ratings = load(get_ratings_name_from_dataset(args.database))
+    trial_times = args.trial
     k = args.k
     mode = args.mode
     need_analysis = args.analysis
@@ -402,7 +406,7 @@ def main():
     else:
         dis_map = None
     if k != 0:
-        best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map)
+        best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map, trial_times)
         best_clusters = k_means(best_seeds)
         dump_clusters(best_clusters)
         if need_analysis:
@@ -412,7 +416,7 @@ def main():
             modes = ['density', 'dsort', 'rsort', 'random']
         else:
             modes = [mode]
-        find_best_k(original_ratings, normalized_ratings, modes, dis_map)
+        find_best_k(original_ratings, normalized_ratings, modes, dis_map, trial_times)
 
 
 if __name__ == '__main__':
