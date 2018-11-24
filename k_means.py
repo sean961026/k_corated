@@ -80,7 +80,6 @@ def get_initial_seeds_by_density(normalized_ratings, size, dis_map=None):
 
     for i in range(2, size + 1):
         seeds.append(find_l_th_seed(i))
-    logging.info(seeds[0])
     return seeds
 
 
@@ -183,7 +182,7 @@ class Cluster:
         temp = [0] * Cluster.normalized_ratings.shape[1]
         for i in range(Cluster.normalized_ratings.shape[1]):
             for point in self.points:
-                temp[i] += Cluster.normalized_ratings[point, i] == 0
+                temp[i] += Cluster.normalized_ratings[point, i]
         return temp
 
     def add_new_point(self, point):
