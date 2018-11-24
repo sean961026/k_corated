@@ -81,7 +81,7 @@ def main():
         plt.figure()
         plt.xlabel('top')
         plt.ylabel('RMSE')
-        best = {'top': None, 'RMSE': 2, 'web': None, }
+        best = {'top': None, 'RMSE': 2, 'web': None}
         for web_name in web_names:
             y = []
             web = load(web_name)
@@ -101,7 +101,7 @@ def main():
         plt.xlabel('top')
         plt.ylabel('RMSE')
         web = load(web_name)
-        best = {'top': None, 'RMSE': 2, 'adapter': None, }
+        best = {'top': None, 'RMSE': 2, 'adapter': None}
         for adapter_kind in adapter_kinds:
             y = []
             for temp_top in temp_tops:
