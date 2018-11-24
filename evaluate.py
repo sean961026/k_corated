@@ -94,9 +94,8 @@ def main():
                 best = {'web': web_name, 'RMSE': min(y), 'top': temp_tops[y.index(min(y))]}
             plt.plot(temp_tops, y, marker='*', label=web_name)
         plt.legend()
-        text = '%.4f,%s' % (best['RMSE'], best['web'])
-        plt.text(best['top'], best['RMSE'], text)
         plt.savefig('top-RMSE-webs.jpg')
+        logging.info('best:%s', best)
     elif web_name != 'all' and adapter_kind == 'all':
         adapter_kinds = ['int', 'round', 'customize', 'int1']
         plt.figure()
@@ -115,9 +114,8 @@ def main():
                 best = {'adapter': adapter_kind, 'RMSE': min(y), 'top': temp_tops[y.index(min(y))]}
             plt.plot(temp_tops, y, marker='*', label=adapter_kind)
         plt.legend()
-        text = '%.4f,%s' % (best['RMSE'], best['adapter'])
-        plt.text(best['top'], best['RMSE'], text)
         plt.savefig('top-RMSE-adapters.jpg')
+        logging.info('best:%s', best)
     elif web_name != 'all' and adapter_kind != 'all':
         logging.info(RMSE(test_set, original_ratings, load(web_name), top, adapter_kind))
     else:
