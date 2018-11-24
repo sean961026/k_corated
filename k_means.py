@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-default_trial_times = 20
+default_trial_times = 15
 
 
 def get_initial_seeds(original_ratings, normalized_ratings, size, mode, dis_map):
@@ -330,7 +330,7 @@ def find_best_k(original_ratings, normalized_ratings, modes, dis_map, trial_time
     plt.figure()
     plt.xlabel('K')
     plt.ylabel('Numbers To Be Added')
-    k_list = [10, 30, 50, 75, 100, 125, 150, 200, 250, 300]
+    k_list = [10, 30, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 600, 700, 800]
     density_data = []
     random_data = []
     for mode in modes:
