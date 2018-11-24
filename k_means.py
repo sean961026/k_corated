@@ -393,7 +393,7 @@ def main():
         normalized_ratings = np.zeros(shape=(original_ratings.shape), dtype=int)
         for i in range(original_ratings.shape[0]):
             normalized_ratings[i, :] = normalize(original_ratings[i, :])
-        dump('dis_map.csv', normalized_ratings)
+        dump('nratings_.csv' % args.database, normalized_ratings)
     if os.path.exists('dis_map.csv'):
         dis_map = load('dis_map.csv')
     else:
