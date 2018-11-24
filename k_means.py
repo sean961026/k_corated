@@ -108,7 +108,7 @@ def get_initial_seeds_randomly(normalized_ratings, random_size):
         return random.sample(all, random_size)
 
 
-def get_best_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map, try_time=5):
+def get_best_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map, try_time=20):
     if mode in ['dsort', 'density']:
         return get_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map)
     seeds_list = []
