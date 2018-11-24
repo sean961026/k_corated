@@ -386,7 +386,6 @@ def main():
     k = args.k
     mode = args.mode
     need_analysis = args.analysis
-    Cluster.original_ratings = original_ratings
     if os.path.exists('nratings_' + args.database + '.csv'):
         normalized_ratings = load('nratings_' + args.database)
     else:
@@ -394,6 +393,7 @@ def main():
         for i in range(original_ratings.shape[0]):
             normalized_ratings[i, :] = normalize(original_ratings[i, :])
         dump('nratings_%s.csv' % args.database, normalized_ratings)
+    Cluster.normalized_ratings = normalized_ratings
     if os.path.exists('dis_map.csv'):
         dis_map = load('dis_map.csv')
     else:
