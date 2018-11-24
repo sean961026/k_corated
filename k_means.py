@@ -7,35 +7,33 @@ import matplotlib.pyplot as plt
 import os
 
 
-def get_initial_seeds(original_ratings, size, mode):
+def get_initial_seeds(original_ratings, normalized_ratings, size, mode, dis_map):
     if mode == 'random':
-        seeds = get_initial_seeds_randomly(original_ratings, size)
+        seeds = get_initial_seeds_randomly(normalized_ratings, size)
     elif mode == 'rsort':
         seeds = get_initial_seeds_by_rsort(original_ratings, size)
     elif mode == 'dsort':
         seeds = get_initial_seeds_by_dsort(original_ratings, size)
     elif mode == 'density':
-        seeds = get_initial_seeds_by_density(original_ratings, size)
+        seeds = get_initial_seeds_by_density(normalized_ratings, size, dis_map)
     else:
         raise ValueError
     return seeds
 
 
-def get_initial_seeds_by_density(original_ratings, size):
-    user_size = original_ratings.shape[0]
+def get_initial_seeds_by_density(normalized_ratings, size, dis_map=None):
+    user_size = normalized_ratings.shape[0]
     seeds = []
 
     def dis(i, j):
-        norm_i = normalize(original_ratings[i, :])
-        norm_j = normalize(original_ratings[j, :])
+        norm_i = normalized_ratings[i, :]
+        norm_j = normalized_ratings[j, :]
         np_i = np.array(norm_i)
         np_j = np.array(norm_j)
         temp = np_j - np_i
         return np.sqrt((temp * temp).sum())
 
-    if os.path.exists('dis_map.csv'):
-        dis_map = load('dis_map.csv')
-    else:
+    if dis_map is None:
         dis_map = np.zeros(shape=(user_size, user_size))
         for i in range(user_size):
             logging.info('filling %dth row', i)
@@ -96,13 +94,13 @@ def get_initial_seeds_by_dsort(original_ratings, size):
             end = len(index) - 1
         else:
             end = start + slice_size - 1
-        seed = (start + end) / 2
+        seed = (start + end) // 2
         seeds.append(seed)
     return seeds
 
 
-def get_initial_seeds_randomly(original_ratings, random_size):
-    user_size = original_ratings.shape[0]
+def get_initial_seeds_randomly(normalized_ratings, random_size):
+    user_size = normalized_ratings.shape[0]
     if user_size < random_size:
         raise ValueError
     else:
@@ -110,13 +108,13 @@ def get_initial_seeds_randomly(original_ratings, random_size):
         return random.sample(all, random_size)
 
 
-def get_best_initial_seeds(original_ratings, size, mode, try_time=5):
+def get_best_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map, try_time=5):
     if mode in ['dsort', 'density']:
-        return get_initial_seeds(original_ratings, size, mode)
+        return get_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map)
     seeds_list = []
     loss_list = []
     for i in range(try_time):
-        seeds_list.append(get_initial_seeds(original_ratings, size, mode))
+        seeds_list.append(get_initial_seeds(original_ratings, nomalized_ratings, size, mode, dis_map))
     for seeds in seeds_list:
         logging.info('trying %sth seeds', seeds_list.index(seeds))
         clusters = [Cluster(seed) for seed in seeds]
@@ -153,10 +151,10 @@ def normalize(vec):
 
 
 class Cluster:
-    original_ratings = None
+    normalized_ratings = None
 
     def __init__(self, centroid_index):
-        self.centroid = normalize(Cluster.original_ratings[centroid_index, :])
+        self.centroid = Cluster.normalized_ratings[centroid_index, :]
         self.points = []
 
     def update_centroid(self):
@@ -181,17 +179,17 @@ class Cluster:
         self.items_sum = self._get_items_sum()
 
     def _get_items_sum(self):
-        temp = [0] * Cluster.original_ratings.shape[1]
-        for i in range(Cluster.original_ratings.shape[1]):
+        temp = [0] * Cluster.normalized_ratings.shape[1]
+        for i in range(Cluster.normalized_ratings.shape[1]):
             for point in self.points:
-                temp[i] += 0 if Cluster.original_ratings[point, i] == 0 else 1
+                temp[i] += Cluster.normalized_ratings[point, i] == 0
         return temp
 
     def add_new_point(self, point):
         self.points.append(point)
 
     def distance_to(self, point):
-        point_vec = np.array(normalize(Cluster.original_ratings[point, :]))
+        point_vec = np.array(Cluster.normalized_ratings[point, :])
         centroid = np.array(self.centroid)
         temp = point_vec - centroid
         return np.sqrt((temp * temp).sum())
@@ -200,7 +198,7 @@ class Cluster:
         s = sum(normalize(self.items_sum)) * len(self.points)
         t = 0
         for point in self.points:
-            t += sum(normalize(Cluster.original_ratings[point, :]))
+            t += sum(Cluster.normalized_ratings[point, :])
         return s - t
 
     def lost(self):
@@ -208,7 +206,7 @@ class Cluster:
             temp_center = np.array([i / len(self.points) for i in self.items_sum])
             lost = 0
             for point in self.points:
-                normalized_point = np.array(normalize(Cluster.original_ratings[point, :]))
+                normalized_point = np.array(Cluster.normalized_ratings[point, :])
                 temp = temp_center - normalized_point
                 lost += np.sqrt((temp * temp).sum())
             return lost
@@ -271,7 +269,7 @@ def lost_of_clusters(clusters):
 
 
 def k_means_iter_once(clusters):
-    point_size = Cluster.original_ratings.shape[0]
+    point_size = Cluster.normalized_ratings.shape[0]
     for point in range(point_size):
         dis = []
         for cluster in clusters:
@@ -326,7 +324,7 @@ def k_means(seeds, threshold=5000):
     return clusters
 
 
-def find_best_k(original_ratings, modes):
+def find_best_k(original_ratings, normalized_ratings, modes, dis_map):
     plt.figure()
     plt.xlabel('K')
     plt.ylabel('Numbers To Be Added')
@@ -336,7 +334,7 @@ def find_best_k(original_ratings, modes):
     for mode in modes:
         loss_list = []
         for k in k_list:
-            best_seeds = get_best_initial_seeds(original_ratings, k, mode)
+            best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map)
             clusters = k_means(best_seeds)
             loss_list.append(loss_of_clusters(clusters))
         if mode == 'density':
@@ -364,7 +362,7 @@ def dump_clusters(clusters):
 
 
 def load_clusters(original_ratings, k):
-    Cluster.original_ratings = original_ratings
+    Cluster.normalized_ratings = original_ratings
     clusters = []
     with open('best_clusters_%s.txt' % k, 'r') as file:
         lines = file.readlines()
@@ -389,8 +387,33 @@ def main():
     mode = args.mode
     need_analysis = args.analysis
     Cluster.original_ratings = original_ratings
+    if os.path.exists('nratings_' + args.database + '.csv'):
+        normalized_ratings = load('nratings_' + args.database)
+    else:
+        normalized_ratings = np.zeros(shape=(original_ratings.shape), dtype=int)
+        for i in range(original_ratings.shape[0]):
+            normalized_ratings[i, :] = normalize(original_ratings[i, :])
+        dump('dis_map.csv', normalized_ratings)
+    if os.path.exists('dis_map.csv'):
+        dis_map = load('dis_map.csv')
+    else:
+        def dis(i, j):
+            norm_i = normalized_ratings[i, :]
+            norm_j = normalized_ratings[j, :]
+            np_i = np.array(norm_i)
+            np_j = np.array(norm_j)
+            temp = np_j - np_i
+            return np.sqrt((temp * temp).sum())
+
+        user_size = original_ratings.shape[0]
+        dis_map = np.zeros(shape=(user_size, user_size))
+        for i in range(user_size):
+            logging.info('filling %dth row', i)
+            for j in range(user_size):
+                dis_map[i, j] = dis(i, j)
+        dump('dis_map.csv', dis_map)
     if k != 0:
-        best_seeds = get_best_initial_seeds(original_ratings, k, mode)
+        best_seeds = get_best_initial_seeds(original_ratings, normalized_ratings, k, mode, dis_map)
         best_clusters = k_means(best_seeds)
         dump_clusters(best_clusters)
         if need_analysis:
