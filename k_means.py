@@ -298,11 +298,15 @@ def analysis_of_clusters(clusters):
         costs.append(cost)
         baselines.append(baseline)
     plt.figure()
-    plt.plot(costs, adds)
+    plt.plot(costs, adds, marker='*')
+    plt.xlabel('delete')
+    plt.ylabel('add')
     plt.savefig('delete-add.jpg')
     plt.figure()
-    plt.plot(baselines, [cost / 80000 for cost in costs])
-    plt.savefig('baseline-cost.jpg')
+    plt.plot(baselines, [cost / 80000 for cost in costs], marker='*')
+    plt.xlabel('threshold')
+    plt.ylabel('delete ratio')
+    plt.savefig('threshold-dratio.jpg')
 
 
 def k_means(seeds, threshold=5000):
