@@ -146,7 +146,8 @@ def de_attack_to_record(record_index):
     data = analyze_scores(scores)
     threshold = data['threshold']
     match = data['max1'] == scores[target_index]
-    logging.info('%s:%s', data['max1'], scores[target_index])
+    logging.info('record:%s,target_in_k:%s, max1:%s, score_of_target_in_k:%s', record_index, target_index, data['max1'],
+                 scores[target_index])
     enough = threshold >= eccen
     if match and enough:
         case = 0
