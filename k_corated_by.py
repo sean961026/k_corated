@@ -156,7 +156,7 @@ def main():
     def k_corated(webname):
         global sorted_ratings
         if cluster_flag:
-            clusters = load_clusters(original_ratings, k)
+            clusters = load_clusters(load('nratings_' + data_set), k)
             sorted_ratings = sort_through_clusters(original_ratings, clusters)
             k_corated, index_translator = corating_all_through_clusters(sorted_ratings.copy(), clusters)
         else:
