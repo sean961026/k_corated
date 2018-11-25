@@ -169,7 +169,7 @@ class Cluster:
         self.items_sum = None
 
     def items_to_keep(self):
-        baseline = 0.05
+        baseline = 0.07
         top = self.top_n_greater_than(baseline)
         zipped = [(self.items_sum[index], index) for index in range(len(self.items_sum))]
         sorted_temp = sorted(zipped, key=lambda x: x[0], reverse=True)
