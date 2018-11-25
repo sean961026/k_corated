@@ -137,7 +137,7 @@ def get_k_corated_index_by_attr(dataset, k, web_name):
 
 
 def get_index_from_krating_file(filename):
-    return 'index' + filename[9:]
+    return 'index_' + filename[9:]
 
 
 def main():
