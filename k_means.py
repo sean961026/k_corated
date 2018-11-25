@@ -330,7 +330,8 @@ def find_best_k(original_ratings, normalized_ratings, modes, dis_map, trial_time
     plt.figure()
     plt.xlabel('K')
     plt.ylabel('Numbers To Be Added')
-    k_list = [10, 30, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 600, 700, 800]
+    # k_list = [10, 30, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 600, 700, 800]
+    k_list = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800]
     density_data = []
     random_data = []
     for mode in modes:
