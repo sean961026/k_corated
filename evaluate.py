@@ -52,7 +52,7 @@ def RMSE(test_set, original_ratings, web, top, adapter_kind):
             predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, top)
             predicted_rating = adapter(predicted_rating, adapter_kind)
         else:
-            predicted_rating = original_ratings[test_user, test_item]
+            predicted_rating = int(original_ratings[test_user, test_item])
             des = 'normal'
         count[des]['num'] += 1
         count[des]['ratings'][predicted_rating - 1] += 1
