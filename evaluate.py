@@ -51,15 +51,12 @@ def RMSE(test_set, original_ratings, web, top, adapter_kind):
         if original_ratings[test_user, test_item] == unknown_rating:
             predicted_rating, des = pd_rating(original_ratings, test_user, test_item, web, top)
             predicted_rating = adapter(predicted_rating, adapter_kind)
-        else:
-            predicted_rating = int(original_ratings[test_user, test_item])
-            des = 'normal'
-        count[des]['num'] += 1
-        count[des]['ratings'][predicted_rating - 1] += 1
-        count[des]['diff'][abs(int(predicted_rating - test_rating))] += 1
-        temp = (test_rating - predicted_rating) ** 2
-        count[des]['rmse'] += temp
-        total += temp
+            count[des]['num'] += 1
+            count[des]['ratings'][predicted_rating - 1] += 1
+            count[des]['diff'][abs(int(predicted_rating - test_rating))] += 1
+            temp = (test_rating - predicted_rating) ** 2
+            count[des]['rmse'] += temp
+            total += temp
     count['RMSE'] = math.sqrt(total / size)
     for des in ['normal', 'over', 'below', 'exception']:
         count[des]['rmse'] = math.sqrt(count[des]['rmse'] / count[des]['num'])
