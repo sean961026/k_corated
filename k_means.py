@@ -345,6 +345,7 @@ def find_best_k(original_ratings, normalized_ratings, modes, dis_map, trial_time
             clusters = k_means(best_seeds)
             loss_list.append(loss_of_clusters(clusters))
         if mode == 'density':
+            mode = 'DD'
             density_data = loss_list.copy()
         elif mode == 'random':
             random_data = loss_list.copy()
@@ -356,7 +357,7 @@ def find_best_k(original_ratings, normalized_ratings, modes, dis_map, trial_time
         plt.figure()
         plt.xlabel('K')
         plt.ylabel('Numbers To Be Added')
-        plt.plot(k_list, density_data, marker='*', label='density')
+        plt.plot(k_list, density_data, marker='*', label='DD')
         plt.plot(k_list, random_data, marker='*', label='random')
         plt.legend()
         plt.savefig('k_add.jpg')
